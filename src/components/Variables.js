@@ -12,7 +12,9 @@ function Variables({
 }) {
   const [editingName, setEditingName] = useState(null);
   const [editingValue, setEditingValue] = useState('');
-  const [searchTerm, setSearchTerm] = useState(''); // Nuevo estado para búsqueda
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8; // Número de variables por página
 
   const startEditing = (name, value) => {
     setEditingName(name);
@@ -47,6 +49,17 @@ function Variables({
   const filteredVariables = Object.entries(variables).filter(([name, value]) =>
     name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Paginación
+  const totalPages = Math.ceil(filteredVariables.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentVariables = filteredVariables.slice(startIndex, endIndex);
+
+  // Resetear página cuando cambie la búsqueda
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
@@ -112,88 +125,128 @@ function Variables({
         </div>
       )}
 
-      {/* Lista de variables */}
-      <div className="space-y-2">
-        {Object.keys(variables).length === 0 ? (
-          <p className="text-gray-500 text-center py-4">
-            No hay variables definidas
-          </p>
-        ) : filteredVariables.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">
-            No se encontraron variables con el término "{searchTerm}"
-          </p>
-        ) : (
-          filteredVariables.map(([name, value]) => (
-            <div
-              key={name}
-              className="bg-gray-50 p-3 rounded-lg border-l-4 border-green-500 hover:bg-gray-100 transition-colors"
-            >
-              {editingName === name ? (
-                // Modo edición
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-700 text-sm">
-                    {name} =
-                  </span>
-                  <input
-                    type="number"
-                    value={editingValue}
-                    onChange={(e) => setEditingValue(e.target.value)}
-                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    onKeyPress={(e) => e.key === 'Enter' && saveEdit(name)}
-                    autoFocus
-                  />
-                  <button
-                    onClick={() => saveEdit(name)}
-                    className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                    title="Guardar cambios"
-                  >
-                    ✓
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
-                    title="Cancelar edición"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : (
-                // Modo visualización
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">
-                    {name} = {value}
-                  </span>
-                  <div className="flex gap-1">
+      {/* Lista de variables con altura fija y scroll */}
+      <div className="mb-4">
+        <div 
+          className="space-y-2 max-h-80 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
+          style={{ minHeight: '400px' }}
+        >
+          {Object.keys(variables).length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              No hay variables definidas
+            </p>
+          ) : filteredVariables.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              No se encontraron variables con el término "{searchTerm}"
+            </p>
+          ) : (
+            currentVariables.map(([name, value]) => (
+              <div
+                key={name}
+                className="bg-gray-50 p-3 rounded-lg border-l-4 border-green-500 hover:bg-gray-100 transition-colors"
+              >
+                {editingName === name ? (
+                  // Modo edición
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-700 text-sm">
+                      {name} =
+                    </span>
+                    <input
+                      type="number"
+                      value={editingValue}
+                      onChange={(e) => setEditingValue(e.target.value)}
+                      className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onKeyPress={(e) => e.key === 'Enter' && saveEdit(name)}
+                      autoFocus
+                    />
                     <button
-                      onClick={() => startEditing(name, value)}
-                      className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded text-sm"
-                      title="Editar variable"
+                      onClick={() => saveEdit(name)}
+                      className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                      title="Guardar cambios"
                     >
-                      ✏️
+                      ✓
                     </button>
                     <button
-                      onClick={() => handleRemoveVariable(name)}
-                      className="text-red-600 hover:text-red-800 px-2 py-1 rounded text-sm"
-                      title="Eliminar variable"
+                      onClick={cancelEdit}
+                      className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                      title="Cancelar edición"
                     >
-                      🗑️
+                      ✕
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
-          ))
-        )}
+                ) : (
+                  // Modo visualización
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-gray-700">
+                      {name} = {value}
+                    </span>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => startEditing(name, value)}
+                        className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded text-sm"
+                        title="Editar variable"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleRemoveVariable(name)}
+                        className="text-red-600 hover:text-red-800 px-2 py-1 rounded text-sm"
+                        title="Eliminar variable"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
+
+      {/* Paginación */}
+      {filteredVariables.length > itemsPerPage && (
+        <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 text-sm bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700"
+          >
+            ← Anterior
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">
+              Página {currentPage} de {totalPages}
+            </span>
+            <span className="text-xs text-gray-500">
+              ({startIndex + 1}-{Math.min(endIndex, filteredVariables.length)} de {filteredVariables.length})
+            </span>
+          </div>
+          
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 text-sm bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700"
+          >
+            Siguiente →
+          </button>
+        </div>
+      )}
 
       {/* Estadísticas */}
       {Object.keys(variables).length > 0 && (
-        <div className="mt-4 p-3 bg-green-50 rounded-lg">
+        <div className="p-3 bg-green-50 rounded-lg">
           <div className="text-sm text-green-700">
             📊 Total de variables: <span className="font-bold">{Object.keys(variables).length}</span>
             {searchTerm && (
               <span className="ml-2">
                 | Filtradas: <span className="font-bold">{filteredVariables.length}</span>
+              </span>
+            )}
+            {filteredVariables.length > itemsPerPage && (
+              <span className="ml-2">
+                | Mostrando: <span className="font-bold">{currentVariables.length}</span>
               </span>
             )}
           </div>
