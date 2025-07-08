@@ -3,6 +3,8 @@ import React from 'react';
 function Calculator({ 
   formula, 
   setFormula, 
+  formulaName,
+  setFormulaName,
   calculateFormula, 
   result, 
   variables 
@@ -13,6 +15,23 @@ function Calculator({
         Calculadora de Fórmulas
       </h2>
       
+      {/* Campo para el nombre de la fórmula */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Nombre de la fórmula (opcional):
+        </label>
+        <input
+          type="text"
+          placeholder="Ej: Área del círculo, Velocidad promedio, Teorema de Pitágoras"
+          value={formulaName}
+          onChange={(e) => setFormulaName(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Si no asignas un nombre, se generará uno automáticamente
+        </p>
+      </div>
+
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Fórmula matemática:
@@ -33,7 +52,7 @@ function Calculator({
         disabled={!formula || Object.keys(variables).length === 0}
         className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200"
       >
-        Calcular Resultado
+        Calcular y Guardar
       </button>
 
       {/* Resultado */}
@@ -54,6 +73,7 @@ function Calculator({
           💡 Consejos:
         </h3>
         <ul className="text-xs text-blue-700 space-y-1">
+          <li>• Asigna un nombre descriptivo a tus fórmulas</li>
           <li>• Define variables antes de usarlas en fórmulas</li>
           <li>• Usa ** para exponentes (ej: x**2 para x²)</li>
           <li>• Usa paréntesis para agrupar operaciones</li>
