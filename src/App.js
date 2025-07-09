@@ -7,18 +7,40 @@ import FormulaHistory from './components/FormulaHistory';
 import Calculator from './components/Calculator';
 
 function App() {
+  // Función para obtener la clave del período actual (mes/año actual)
+  const getCurrentPeriodKey = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    return `${year}-${month}`;
+  };
+
+  // Función para obtener el nombre del mes
+  const getMonthName = (month) => {
+    const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return months[month - 1];
+  };
+
   // Estado principal organizado por períodos
-  const [periods, setPeriods] = useState({
-    '2025-01': {
-      variables: {},
-      formulas: [],
-      created: new Date('2025-01-01').toISOString(),
-      name: 'Plantilla 2025'
-    }
+  const [periods, setPeriods] = useState(() => {
+    const currentPeriodKey = getCurrentPeriodKey();
+    const now = new Date();
+    const currentMonthName = getMonthName(now.getMonth() + 1);
+    const currentYear = now.getFullYear();
+    
+    return {
+      [currentPeriodKey]: {
+        variables: {},
+        formulas: [],
+        created: new Date().toISOString(),
+        name: `${currentMonthName} ${currentYear}`
+      }
+    };
   });
   
-  // Período actual seleccionado
-  const [currentPeriod, setCurrentPeriod] = useState('2025-01');
+  // Período actual seleccionado (por defecto el actual)
+  const [currentPeriod, setCurrentPeriod] = useState(getCurrentPeriodKey());
   
   // Estados locales para el período actual
   const [variableName, setVariableName] = useState('');
@@ -60,15 +82,10 @@ function App() {
         // Calcular nuevo resultado
         const calculatedResult = Function(`"use strict"; return (${evaluableFormula})`)();
         
-        // Verificar si el resultado realmente cambió
-        const resultChanged = formula.result !== calculatedResult;
-        const evaluationChanged = formula.evaluatedFormula !== evaluableFormula;
-        
         return {
           ...formula,
           evaluatedFormula: evaluableFormula,
           result: calculatedResult,
-          // Solo actualizar timestamp porque sabemos que esta fórmula usa la variable modificada
           lastRecalculated: new Date().toLocaleTimeString()
         };
       } catch (error) {
@@ -142,13 +159,37 @@ function App() {
     }));
   };
 
-  // Effect para recalcular automáticamente cuando cambien las variables
+  // Effects para recálculo automático - CORREGIDOS
   useEffect(() => {
     const currentData = getCurrentPeriodData();
     if (currentData.formulas.length > 0) {
       recalculateAllFormulas();
     }
-  }, [currentPeriod]); // Solo cuando cambie el período, no las variables
+  }, [currentPeriod]); // Solo cuando cambie el período
+
+  // Nuevo useEffect para detectar cambios en variables del período actual
+  useEffect(() => {
+    const currentData = getCurrentPeriodData();
+    if (currentData.formulas.length > 0) {
+      const timeoutId = setTimeout(() => {
+        recalculateAllFormulas(currentPeriod);
+      }, 50);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [periods[currentPeriod]?.variables]); // Detecta cambios en variables
+
+  // Nuevo useEffect para detectar cambios en fórmulas del período actual
+  useEffect(() => {
+    const currentData = getCurrentPeriodData();
+    if (currentData.formulas.length > 0) {
+      const timeoutId = setTimeout(() => {
+        recalculateAllFormulas(currentPeriod);
+      }, 50);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [periods[currentPeriod]?.formulas?.length]); // Detecta cuando se agregan/eliminan fórmulas
 
   // Función para crear un nuevo período
   const createNewPeriod = (year, month, name) => {
@@ -174,7 +215,37 @@ function App() {
     setCurrentPeriod(periodKey);
   };
 
-  // Función para copiar variables del período anterior (modificada para aceptar período específico)
+  // Función para eliminar un período
+  const deletePeriod = (periodKey) => {
+    if (Object.keys(periods).length === 1) {
+      alert('No puedes eliminar el último período. Debe existir al menos uno.');
+      return;
+    }
+
+    const periodToDelete = periods[periodKey];
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar el período "${periodToDelete.name}"?\n\n` +
+      `Variables: ${Object.keys(periodToDelete.variables).length}\n` +
+      `Fórmulas: ${periodToDelete.formulas.length}\n\n` +
+      `Esta acción no se puede deshacer.`
+    );
+
+    if (confirmDelete) {
+      setPeriods(prev => {
+        const newPeriods = { ...prev };
+        delete newPeriods[periodKey];
+        return newPeriods;
+      });
+
+      // Si se elimina el período actual, cambiar a otro período
+      if (currentPeriod === periodKey) {
+        const remainingPeriods = Object.keys(periods).filter(key => key !== periodKey);
+        setCurrentPeriod(remainingPeriods[0]);
+      }
+    }
+  };
+
+  // Función para copiar variables del período anterior (CORREGIDA)
   const copyVariablesFromPreviousPeriod = (targetPeriod, specificSourcePeriod = null) => {
     const periodKeys = Object.keys(periods).sort();
     const currentIndex = periodKeys.indexOf(targetPeriod);
@@ -214,10 +285,12 @@ function App() {
           variables: { ...sourceVariables }
         }
       }));
+
+      // El recálculo automático se ejecutará por el useEffect que detecta cambios en variables
     }
   };
 
-  // Función para copiar fórmulas del período anterior (modificada para aceptar período específico)
+  // Función para copiar fórmulas del período anterior (CORREGIDA)
   const copyFormulasFromPreviousPeriod = (targetPeriod, specificSourcePeriod = null) => {
     const periodKeys = Object.keys(periods).sort();
     const currentIndex = periodKeys.indexOf(targetPeriod);
@@ -265,9 +338,11 @@ function App() {
         ...prev,
         [targetPeriod]: {
           ...prev[targetPeriod],
-          formulas: copiedFormulas
+          formulas: [...prev[targetPeriod].formulas, ...copiedFormulas]
         }
       }));
+
+      // El recálculo automático se ejecutará por el useEffect que detecta cambios en la longitud de fórmulas
     }
   };
 
@@ -295,11 +370,9 @@ function App() {
         }
       }));
       
-      // Recalcular solo fórmulas que usan esta variable
-      setTimeout(() => recalculateFormulasForVariable(variableName), 50);
-      
       setVariableName('');
       setVariableValue('');
+      // El recálculo automático se ejecutará por el useEffect que detecta cambios en variables
     }
   };
 
@@ -316,9 +389,7 @@ function App() {
         }
       };
     });
-    
-    // Recalcular solo fórmulas que usaban esta variable
-    setTimeout(() => recalculateFormulasForVariable(name), 50);
+    // El recálculo automático se ejecutará por el useEffect que detecta cambios en variables
   };
 
   const editVariable = (name, newValue) => {
@@ -332,9 +403,7 @@ function App() {
         }
       }
     }));
-    
-    // Recalcular solo fórmulas que usan esta variable
-    setTimeout(() => recalculateFormulasForVariable(name), 50);
+    // El recálculo automático se ejecutará por el useEffect que detecta cambios en variables
   };
 
   const calculateFormula = () => {
@@ -475,13 +544,6 @@ function App() {
     }
   };
 
-  // Función helper para nombres de meses
-  const getMonthName = (month) => {
-    const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    return months[month - 1];
-  };
-
   const currentData = getCurrentPeriodData();
 
   return (
@@ -495,6 +557,7 @@ function App() {
           currentPeriod={currentPeriod}
           setCurrentPeriod={setCurrentPeriod}
           createNewPeriod={createNewPeriod}
+          deletePeriod={deletePeriod}
           copyVariablesFromPreviousPeriod={copyVariablesFromPreviousPeriod}
           copyFormulasFromPreviousPeriod={copyFormulasFromPreviousPeriod}
         />
@@ -518,7 +581,7 @@ function App() {
             reuseFormula={reuseFormula}
             editFormulaName={editFormulaName}
             currentPeriod={periods[currentPeriod]?.name}
-            variables={currentData.variables} // Add this line
+            variables={currentData.variables}
           />
 
           <Calculator
