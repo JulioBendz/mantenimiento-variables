@@ -18,6 +18,12 @@ function PeriodSelector({
   const [copyFormulas, setCopyFormulas] = useState(true);
   const [sourcePeriod, setSourcePeriod] = useState('');
 
+  // Estados para los modales de copia individual
+  const [showVariablesModal, setShowVariablesModal] = useState(false);
+  const [showFormulasModal, setShowFormulasModal] = useState(false);
+  const [selectedSourceForVariables, setSelectedSourceForVariables] = useState('');
+  const [selectedSourceForFormulas, setSelectedSourceForFormulas] = useState('');
+
   const handleCreatePeriod = () => {
     const periodName = newName || `${getMonthName(newMonth)} ${newYear}`;
     const periodKey = `${newYear}-${newMonth.toString().padStart(2, '0')}`;
@@ -40,7 +46,7 @@ function PeriodSelector({
         if (copyFormulas) {
           copyFormulasFromSpecificPeriod(periodKey, sourcePeriod);
         }
-      }, 100); // Pequeña pausa para asegurar que el período se creó
+      }, 100);
     }
     
     // Resetear formulario
@@ -71,18 +77,54 @@ function PeriodSelector({
     }
   };
 
+  // Función para copiar variables con modal de selección
+  const handleCopyVariablesWithModal = () => {
+    if (!selectedSourceForVariables) {
+      alert('Selecciona un período fuente para copiar variables');
+      return;
+    }
+    
+    copyVariablesFromSpecificPeriod(currentPeriod, selectedSourceForVariables);
+    setShowVariablesModal(false);
+    setSelectedSourceForVariables('');
+  };
+
+  // Función para copiar fórmulas con modal de selección
+  const handleCopyFormulasWithModal = () => {
+    if (!selectedSourceForFormulas) {
+      alert('Selecciona un período fuente para copiar fórmulas');
+      return;
+    }
+    
+    copyFormulasFromSpecificPeriod(currentPeriod, selectedSourceForFormulas);
+    setShowFormulasModal(false);
+    setSelectedSourceForFormulas('');
+  };
+
   const getMonthName = (month) => {
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     return months[month - 1];
   };
 
+  // Función para obtener mes y año del período actual
+  const getCurrentPeriodMonthYear = () => {
+    if (!currentPeriod) return '';
+    
+    const [year, month] = currentPeriod.split('-');
+    const monthName = getMonthName(parseInt(month));
+    return `${monthName} ${year}`;
+  };
+
   const sortedPeriods = Object.entries(periods).sort((a, b) => b[0].localeCompare(a[0]));
+  
+  // Obtener períodos disponibles para copiar (excluyendo el actual)
+  const availablePeriodsForCopy = sortedPeriods.filter(([key]) => key !== currentPeriod);
   
   // Obtener período anterior automáticamente
   const getDefaultSourcePeriod = () => {
     const periodKeys = Object.keys(periods).sort((a, b) => b.localeCompare(a));
-    return periodKeys[0] || ''; // El más reciente
+    return periodKeys[0] || '';
   };
 
   // Efecto para establecer el período fuente por defecto
@@ -92,11 +134,29 @@ function PeriodSelector({
     }
   }, [showCreateForm]);
 
+  // Efecto para establecer períodos por defecto en modales
+  React.useEffect(() => {
+    if (showVariablesModal && !selectedSourceForVariables && availablePeriodsForCopy.length > 0) {
+      setSelectedSourceForVariables(availablePeriodsForCopy[0][0]);
+    }
+  }, [showVariablesModal]);
+
+  React.useEffect(() => {
+    if (showFormulasModal && !selectedSourceForFormulas && availablePeriodsForCopy.length > 0) {
+      setSelectedSourceForFormulas(availablePeriodsForCopy[0][0]);
+    }
+  }, [showFormulasModal]);
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-800">
           📅 Período Actual: {periods[currentPeriod]?.name || 'Sin seleccionar'}
+          {currentPeriod && (
+            <span className="text-sm font-normal text-gray-600 ml-2">
+              ({getCurrentPeriodMonthYear()})
+            </span>
+          )}
         </h2>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
@@ -300,21 +360,167 @@ function PeriodSelector({
 
         <div className="flex gap-2">
           <button
-            onClick={() => copyVariablesFromPreviousPeriod(currentPeriod)}
+            onClick={() => setShowVariablesModal(true)}
             className="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700 transition duration-200"
-            title="Copiar variables del período anterior"
+            title="Copiar variables de otro período"
+            disabled={availablePeriodsForCopy.length === 0}
           >
             📋 Variables
           </button>
           <button
-            onClick={() => copyFormulasFromPreviousPeriod(currentPeriod)}
+            onClick={() => setShowFormulasModal(true)}
             className="bg-orange-600 text-white px-3 py-2 rounded text-sm hover:bg-orange-700 transition duration-200"
-            title="Copiar fórmulas del período anterior"
+            title="Copiar fórmulas de otro período"
+            disabled={availablePeriodsForCopy.length === 0}
           >
             📋 Fórmulas
           </button>
         </div>
       </div>
+
+      {/* Modal para copiar variables */}
+      {showVariablesModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              📋 Copiar Variables
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Selecciona el período desde el cual copiar variables al período actual:
+              <strong className="block mt-1">{periods[currentPeriod]?.name} ({getCurrentPeriodMonthYear()})</strong>
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Copiar variables desde:
+              </label>
+              <select
+                value={selectedSourceForVariables}
+                onChange={(e) => setSelectedSourceForVariables(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Seleccionar período...</option>
+                {availablePeriodsForCopy.map(([key, period]) => (
+                  <option key={key} value={key}>
+                    {period.name} ({Object.keys(period.variables).length} variables)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedSourceForVariables && periods[selectedSourceForVariables] && (
+              <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="text-sm text-green-800">
+                  <strong>Variables a copiar:</strong>
+                  <div className="mt-1 text-xs">
+                    {Object.keys(periods[selectedSourceForVariables].variables).length > 0 ? (
+                      <>
+                        {Object.keys(periods[selectedSourceForVariables].variables).slice(0, 5).join(', ')}
+                        {Object.keys(periods[selectedSourceForVariables].variables).length > 5 && 
+                          ` y ${Object.keys(periods[selectedSourceForVariables].variables).length - 5} más...`
+                        }
+                      </>
+                    ) : (
+                      'No hay variables en este período'
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyVariablesWithModal}
+                disabled={!selectedSourceForVariables || Object.keys(periods[selectedSourceForVariables]?.variables || {}).length === 0}
+                className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition duration-200"
+              >
+                Copiar Variables
+              </button>
+              <button
+                onClick={() => {
+                  setShowVariablesModal(false);
+                  setSelectedSourceForVariables('');
+                }}
+                className="flex-1 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition duration-200"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para copiar fórmulas */}
+      {showFormulasModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              📋 Copiar Fórmulas
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Selecciona el período desde el cual copiar fórmulas al período actual:
+              <strong className="block mt-1">{periods[currentPeriod]?.name} ({getCurrentPeriodMonthYear()})</strong>
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Copiar fórmulas desde:
+              </label>
+              <select
+                value={selectedSourceForFormulas}
+                onChange={(e) => setSelectedSourceForFormulas(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Seleccionar período...</option>
+                {availablePeriodsForCopy.map(([key, period]) => (
+                  <option key={key} value={key}>
+                    {period.name} ({period.formulas.length} fórmulas)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedSourceForFormulas && periods[selectedSourceForFormulas] && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="text-sm text-blue-800">
+                  <strong>Fórmulas a copiar:</strong>
+                  <div className="mt-1 text-xs">
+                    {periods[selectedSourceForFormulas].formulas.length > 0 ? (
+                      <>
+                        {periods[selectedSourceForFormulas].formulas.slice(0, 3).map(f => f.name).join(', ')}
+                        {periods[selectedSourceForFormulas].formulas.length > 3 && 
+                          ` y ${periods[selectedSourceForFormulas].formulas.length - 3} más...`
+                        }
+                      </>
+                    ) : (
+                      'No hay fórmulas en este período'
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyFormulasWithModal}
+                disabled={!selectedSourceForFormulas || periods[selectedSourceForFormulas]?.formulas.length === 0}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition duration-200"
+              >
+                Copiar Fórmulas
+              </button>
+              <button
+                onClick={() => {
+                  setShowFormulasModal(false);
+                  setSelectedSourceForFormulas('');
+                }}
+                className="flex-1 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition duration-200"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Estadísticas del período actual */}
       <div className="mt-4 p-3 bg-blue-50 rounded-lg">
