@@ -5,14 +5,13 @@ function PeriodSelector({
   currentPeriod, 
   setCurrentPeriod, 
   createNewPeriod,
-  deletePeriod, // Nueva prop
+  deletePeriod,
   copyVariablesFromPreviousPeriod,
   copyFormulasFromPreviousPeriod
 }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newYear, setNewYear] = useState(new Date().getFullYear());
   const [newMonth, setNewMonth] = useState(new Date().getMonth() + 1);
-  const [newName, setNewName] = useState('');
   
   // Estados para la copia de datos
   const [copyVariables, setCopyVariables] = useState(true);
@@ -26,7 +25,8 @@ function PeriodSelector({
   const [selectedSourceForFormulas, setSelectedSourceForFormulas] = useState('');
 
   const handleCreatePeriod = () => {
-    const periodName = newName || `${getMonthName(newMonth)} ${newYear}`;
+    // El nombre se asigna automáticamente basado en mes y año
+    const periodName = `${getMonthName(newMonth)} ${newYear}`;
     const periodKey = `${newYear}-${newMonth.toString().padStart(2, '0')}`;
     
     // Verificar si ya existe
@@ -52,7 +52,6 @@ function PeriodSelector({
     
     // Resetear formulario
     setShowCreateForm(false);
-    setNewName('');
     setCopyVariables(true);
     setCopyFormulas(true);
     setSourcePeriod('');
@@ -112,15 +111,6 @@ function PeriodSelector({
     return months[month - 1];
   };
 
-  // Función para obtener mes y año del período actual
-  const getCurrentPeriodMonthYear = () => {
-    if (!currentPeriod) return '';
-    
-    const [year, month] = currentPeriod.split('-');
-    const monthName = getMonthName(parseInt(month));
-    return `${monthName} ${year}`;
-  };
-
   const sortedPeriods = Object.entries(periods).sort((a, b) => b[0].localeCompare(a[0]));
   
   // Obtener períodos disponibles para copiar (excluyendo el actual)
@@ -157,11 +147,6 @@ function PeriodSelector({
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-800">
           📅 Período Actual: {periods[currentPeriod]?.name || 'Sin seleccionar'}
-          {currentPeriod && (
-            <span className="text-sm font-normal text-gray-600 ml-2">
-              ({getCurrentPeriodMonthYear()})
-            </span>
-          )}
         </h2>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
@@ -176,8 +161,8 @@ function PeriodSelector({
         <div className="bg-gray-50 p-4 rounded-lg mb-4">
           <h3 className="text-lg font-medium text-gray-800 mb-3">Crear Nuevo Período</h3>
           
-          {/* Información del nuevo período */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Información del nuevo período - SIMPLIFICADO */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Año</label>
               <input
@@ -203,15 +188,12 @@ function PeriodSelector({
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre (opcional)</label>
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder={`${getMonthName(newMonth)} ${newYear}`}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          </div>
+
+          {/* Vista previa del nombre del período */}
+          <div className="mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="text-sm text-blue-700">
+              <strong>Período a crear:</strong> {getMonthName(newMonth)} {newYear}
             </div>
           </div>
 
@@ -321,7 +303,7 @@ function PeriodSelector({
               onClick={handleCreatePeriod}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200"
             >
-              Crear Período
+              Crear {getMonthName(newMonth)} {newYear}
               {sourcePeriod && (copyVariables || copyFormulas) && (
                 <span className="ml-1 text-xs">
                   (con datos)
@@ -331,7 +313,6 @@ function PeriodSelector({
             <button
               onClick={() => {
                 setShowCreateForm(false);
-                setNewName('');
                 setCopyVariables(true);
                 setCopyFormulas(true);
                 setSourcePeriod('');
@@ -400,7 +381,7 @@ function PeriodSelector({
             </h3>
             <p className="text-sm text-gray-600 mb-4">
               Selecciona el período desde el cual copiar variables al período actual:
-              <strong className="block mt-1">{periods[currentPeriod]?.name} ({getCurrentPeriodMonthYear()})</strong>
+              <strong className="block mt-1">{periods[currentPeriod]?.name}</strong>
             </p>
             
             <div className="mb-4">
@@ -472,7 +453,7 @@ function PeriodSelector({
             </h3>
             <p className="text-sm text-gray-600 mb-4">
               Selecciona el período desde el cual copiar fórmulas al período actual:
-              <strong className="block mt-1">{periods[currentPeriod]?.name} ({getCurrentPeriodMonthYear()})</strong>
+              <strong className="block mt-1">{periods[currentPeriod]?.name}</strong>
             </p>
             
             <div className="mb-4">
