@@ -16,6 +16,17 @@ function App() {
 
   const addVariable = () => {
     if (variableName && variableValue) {
+      // Verificar si la variable ya existe
+      if (variables[variableName]) {
+        const confirmReplace = window.confirm(
+          `La variable "${variableName}" ya existe con el valor ${variables[variableName]}.\n\n¿Deseas reemplazar el valor actual con ${variableValue}?`
+        );
+        
+        if (!confirmReplace) {
+          return; // No hacer nada si el usuario cancela
+        }
+      }
+
       setVariables(prev => ({
         ...prev,
         [variableName]: parseFloat(variableValue)
@@ -54,18 +65,51 @@ function App() {
       const calculatedResult = Function(`"use strict"; return (${evaluableFormula})`)();
       setResult(calculatedResult);
       
-      // Guardar la fórmula calculada con nombre personalizado
-      const newFormulaEntry = {
-        id: Date.now(),
-        name: formulaName || `Fórmula ${Date.now()}`,
-        originalFormula: formula,
-        evaluatedFormula: evaluableFormula,
-        result: calculatedResult,
-        timestamp: new Date().toLocaleTimeString(),
-        date: new Date().toLocaleDateString()
-      };
+      // Generar nombre de fórmula
+      const finalFormulaName = formulaName || `Fórmula ${Date.now()}`;
       
-      setSavedFormulas(prev => [newFormulaEntry, ...prev]);
+      // Verificar si ya existe una fórmula con el mismo nombre
+      const existingFormula = savedFormulas.find(f => f.name === finalFormulaName);
+      
+      if (existingFormula) {
+        const confirmReplace = window.confirm(
+          `Ya existe una fórmula con el nombre "${finalFormulaName}".\n\nFórmula existente: ${existingFormula.originalFormula}\nResultado existente: ${existingFormula.result}\n\nNueva fórmula: ${formula}\nNuevo resultado: ${calculatedResult}\n\n¿Deseas reemplazar la fórmula existente?`
+        );
+        
+        if (!confirmReplace) {
+          return; // No hacer nada si el usuario cancela
+        }
+        
+        // Reemplazar la fórmula existente
+        setSavedFormulas(prev => 
+          prev.map(f => 
+            f.name === finalFormulaName 
+              ? {
+                  ...f,
+                  originalFormula: formula,
+                  evaluatedFormula: evaluableFormula,
+                  result: calculatedResult,
+                  timestamp: new Date().toLocaleTimeString(),
+                  date: new Date().toLocaleDateString()
+                }
+              : f
+          )
+        );
+      } else {
+        // Agregar nueva fórmula
+        const newFormulaEntry = {
+          id: Date.now(),
+          name: finalFormulaName,
+          originalFormula: formula,
+          evaluatedFormula: evaluableFormula,
+          result: calculatedResult,
+          timestamp: new Date().toLocaleTimeString(),
+          date: new Date().toLocaleDateString()
+        };
+        
+        setSavedFormulas(prev => [newFormulaEntry, ...prev]);
+      }
+      
       setFormulaName('');
     } catch (error) {
       setResult('Error en la fórmula');
@@ -82,13 +126,47 @@ function App() {
   };
 
   const editFormulaName = (id, newName) => {
-    setSavedFormulas(prev => 
-      prev.map(formula => 
-        formula.id === id 
-          ? { ...formula, name: newName || formula.name }
-          : formula
-      )
-    );
+    // Verificar si ya existe una fórmula con el nuevo nombre
+    const existingFormula = savedFormulas.find(f => f.name === newName && f.id !== id);
+    
+    if (existingFormula) {
+      const confirmReplace = window.confirm(
+        `Ya existe una fórmula con el nombre "${newName}".\n\nFórmula existente: ${existingFormula.originalFormula}\nResultado existente: ${existingFormula.result}\n\n¿Deseas reemplazar la fórmula existente con esta?`
+      );
+      
+      if (!confirmReplace) {
+        return; // No hacer nada si el usuario cancela
+      }
+      
+      // Obtener la fórmula que se está editando
+      const formulaBeingEdited = savedFormulas.find(f => f.id === id);
+      
+      // Reemplazar la fórmula existente con los datos de la que se está editando
+      setSavedFormulas(prev => 
+        prev.filter(f => f.id !== id) // Remover la fórmula que se está editando
+          .map(f => 
+            f.name === newName 
+              ? {
+                  ...f,
+                  originalFormula: formulaBeingEdited.originalFormula,
+                  evaluatedFormula: formulaBeingEdited.evaluatedFormula,
+                  result: formulaBeingEdited.result,
+                  timestamp: formulaBeingEdited.timestamp,
+                  date: formulaBeingEdited.date
+                }
+              : f
+          )
+      );
+    } else {
+      // Simplemente cambiar el nombre si no hay conflicto
+      setSavedFormulas(prev => 
+        prev.map(formula => 
+          formula.id === id 
+            ? { ...formula, name: newName || formula.name }
+            : formula
+        )
+      );
+    }
   };
 
   return (
