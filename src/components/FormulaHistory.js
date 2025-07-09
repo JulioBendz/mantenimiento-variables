@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 
-function FormulaHistory({ savedFormulas, removeFormula, reuseFormula, editFormulaName }) {
+function FormulaHistory({ 
+  savedFormulas, 
+  removeFormula, 
+  reuseFormula, 
+  editFormulaName, 
+  currentPeriod,
+  variables // Add this prop
+}) {
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,9 +59,11 @@ function FormulaHistory({ savedFormulas, removeFormula, reuseFormula, editFormul
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        Historial de Fórmulas
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-semibold text-gray-800">
+          Historial de Fórmulas
+        </h2>
+      </div>
       
       {/* Buscador de fórmulas */}
       {savedFormulas.length > 0 && (
@@ -155,10 +164,26 @@ function FormulaHistory({ savedFormulas, removeFormula, reuseFormula, editFormul
                     Fórmula: {formulaEntry.originalFormula}
                   </div>
                   <div className="text-xs text-gray-500 mb-1">
-                    Evaluada: {formulaEntry.evaluatedFormula}
+                    Evaluada: {formulaEntry.evaluatedFormula || 'Pendiente de cálculo'}
                   </div>
                   <div className="text-xl font-bold text-blue-600">
-                    Resultado: {formulaEntry.result}
+                    Resultado: {formulaEntry.result !== null && formulaEntry.result !== undefined ? formulaEntry.result : 'Pendiente'}
+                  </div>
+                  {formulaEntry.lastRecalculated && (
+                    <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Última actualización: {formulaEntry.lastRecalculated}
+                    </div>
+                  )}
+                  
+                  {/* Indicador de variables usadas */}
+                  <div className="text-xs text-gray-400 mt-1">
+                    Variables utilizadas: {
+                      Object.keys(variables).filter(varName => {
+                        const regex = new RegExp(`\\b${varName}\\b`);
+                        return regex.test(formulaEntry.originalFormula);
+                      }).join(', ') || 'Ninguna'
+                    }
                   </div>
                 </div>
 
@@ -235,6 +260,9 @@ function FormulaHistory({ savedFormulas, removeFormula, reuseFormula, editFormul
                 | Mostrando: <span className="font-bold">{currentFormulas.length}</span>
               </span>
             )}
+          </div>
+          <div className="text-xs text-blue-600 mt-1">
+            ⚡ Las fórmulas se recalculan automáticamente al cambiar variables
           </div>
         </div>
       )}
