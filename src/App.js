@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Header from './components/Header';
 import PeriodSelector from './components/PeriodSelector';
@@ -31,6 +31,124 @@ function App() {
   const getCurrentPeriodData = () => {
     return periods[currentPeriod] || { variables: {}, formulas: [] };
   };
+
+  // Función helper para verificar si una fórmula usa una variable específica
+  const formulaUsesVariable = (formula, variableName) => {
+    const regex = new RegExp(`\\b${variableName}\\b`);
+    return regex.test(formula.originalFormula);
+  };
+
+  // Función optimizada para recalcular solo fórmulas afectadas por una variable específica
+  const recalculateFormulasForVariable = (variableName, targetPeriod = currentPeriod) => {
+    const periodData = periods[targetPeriod];
+    if (!periodData || periodData.formulas.length === 0) return;
+
+    const updatedFormulas = periodData.formulas.map(formula => {
+      // Solo procesar fórmulas que usan esta variable
+      if (!formulaUsesVariable(formula, variableName)) {
+        return formula; // No cambiar nada si no usa la variable
+      }
+
+      try {
+        // Reemplazar variables en la fórmula
+        let evaluableFormula = formula.originalFormula;
+        Object.keys(periodData.variables).forEach(varName => {
+          const regex = new RegExp(`\\b${varName}\\b`, 'g');
+          evaluableFormula = evaluableFormula.replace(regex, periodData.variables[varName]);
+        });
+        
+        // Calcular nuevo resultado
+        const calculatedResult = Function(`"use strict"; return (${evaluableFormula})`)();
+        
+        // Verificar si el resultado realmente cambió
+        const resultChanged = formula.result !== calculatedResult;
+        const evaluationChanged = formula.evaluatedFormula !== evaluableFormula;
+        
+        return {
+          ...formula,
+          evaluatedFormula: evaluableFormula,
+          result: calculatedResult,
+          // Solo actualizar timestamp porque sabemos que esta fórmula usa la variable modificada
+          lastRecalculated: new Date().toLocaleTimeString()
+        };
+      } catch (error) {
+        return {
+          ...formula,
+          evaluatedFormula: 'Error en evaluación',
+          result: 'Error en la fórmula',
+          lastRecalculated: new Date().toLocaleTimeString()
+        };
+      }
+    });
+
+    setPeriods(prev => ({
+      ...prev,
+      [targetPeriod]: {
+        ...prev[targetPeriod],
+        formulas: updatedFormulas
+      }
+    }));
+  };
+
+  // Función mejorada para recalcular todas las fórmulas (para casos generales)
+  const recalculateAllFormulas = (targetPeriod = currentPeriod) => {
+    const periodData = periods[targetPeriod];
+    if (!periodData || periodData.formulas.length === 0) return;
+
+    const updatedFormulas = periodData.formulas.map(formula => {
+      try {
+        // Reemplazar variables en la fórmula
+        let evaluableFormula = formula.originalFormula;
+        Object.keys(periodData.variables).forEach(varName => {
+          const regex = new RegExp(`\\b${varName}\\b`, 'g');
+          evaluableFormula = evaluableFormula.replace(regex, periodData.variables[varName]);
+        });
+        
+        // Calcular nuevo resultado
+        const calculatedResult = Function(`"use strict"; return (${evaluableFormula})`)();
+        
+        // Verificar si el resultado realmente cambió
+        const resultChanged = formula.result !== calculatedResult;
+        const evaluationChanged = formula.evaluatedFormula !== evaluableFormula;
+        
+        // Solo actualizar timestamp si hubo cambios reales
+        const shouldUpdateTimestamp = resultChanged || evaluationChanged || !formula.lastRecalculated;
+        
+        return {
+          ...formula,
+          evaluatedFormula: evaluableFormula,
+          result: calculatedResult,
+          lastRecalculated: shouldUpdateTimestamp ? new Date().toLocaleTimeString() : formula.lastRecalculated
+        };
+      } catch (error) {
+        // En caso de error, verificar si el error es nuevo
+        const errorChanged = formula.result !== 'Error en la fórmula' || formula.evaluatedFormula !== 'Error en evaluación';
+        
+        return {
+          ...formula,
+          evaluatedFormula: 'Error en evaluación',
+          result: 'Error en la fórmula',
+          lastRecalculated: errorChanged ? new Date().toLocaleTimeString() : formula.lastRecalculated
+        };
+      }
+    });
+
+    setPeriods(prev => ({
+      ...prev,
+      [targetPeriod]: {
+        ...prev[targetPeriod],
+        formulas: updatedFormulas
+      }
+    }));
+  };
+
+  // Effect para recalcular automáticamente cuando cambien las variables
+  useEffect(() => {
+    const currentData = getCurrentPeriodData();
+    if (currentData.formulas.length > 0) {
+      recalculateAllFormulas();
+    }
+  }, [currentPeriod]); // Solo cuando cambie el período, no las variables
 
   // Función para crear un nuevo período
   const createNewPeriod = (year, month, name) => {
@@ -138,8 +256,9 @@ function App() {
         id: Date.now() + Math.random(),
         timestamp: new Date().toLocaleTimeString(),
         date: new Date().toLocaleDateString(),
-        result: null, // Se recalculará
-        evaluatedFormula: null // Se recalculará
+        result: null, // Se recalculará automáticamente
+        evaluatedFormula: null, // Se recalculará automáticamente
+        lastRecalculated: null
       }));
       
       setPeriods(prev => ({
@@ -176,6 +295,9 @@ function App() {
         }
       }));
       
+      // Recalcular solo fórmulas que usan esta variable
+      setTimeout(() => recalculateFormulasForVariable(variableName), 50);
+      
       setVariableName('');
       setVariableValue('');
     }
@@ -194,6 +316,9 @@ function App() {
         }
       };
     });
+    
+    // Recalcular solo fórmulas que usaban esta variable
+    setTimeout(() => recalculateFormulasForVariable(name), 50);
   };
 
   const editVariable = (name, newValue) => {
@@ -207,6 +332,9 @@ function App() {
         }
       }
     }));
+    
+    // Recalcular solo fórmulas que usan esta variable
+    setTimeout(() => recalculateFormulasForVariable(name), 50);
   };
 
   const calculateFormula = () => {
@@ -246,7 +374,8 @@ function App() {
                     evaluatedFormula: evaluableFormula,
                     result: calculatedResult,
                     timestamp: new Date().toLocaleTimeString(),
-                    date: new Date().toLocaleDateString()
+                    date: new Date().toLocaleDateString(),
+                    lastRecalculated: new Date().toLocaleTimeString()
                   }
                 : f
             )
@@ -262,7 +391,8 @@ function App() {
           result: calculatedResult,
           timestamp: new Date().toLocaleTimeString(),
           date: new Date().toLocaleDateString(),
-          period: currentPeriod
+          period: currentPeriod,
+          lastRecalculated: new Date().toLocaleTimeString()
         };
         
         setPeriods(prev => ({
@@ -323,7 +453,8 @@ function App() {
                     evaluatedFormula: formulaBeingEdited.evaluatedFormula,
                     result: formulaBeingEdited.result,
                     timestamp: formulaBeingEdited.timestamp,
-                    date: formulaBeingEdited.date
+                    date: formulaBeingEdited.date,
+                    lastRecalculated: formulaBeingEdited.lastRecalculated
                   }
                 : f
             )
@@ -387,6 +518,7 @@ function App() {
             reuseFormula={reuseFormula}
             editFormulaName={editFormulaName}
             currentPeriod={periods[currentPeriod]?.name}
+            variables={currentData.variables} // Add this line
           />
 
           <Calculator
