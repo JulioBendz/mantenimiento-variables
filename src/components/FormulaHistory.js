@@ -6,7 +6,7 @@ function FormulaHistory({
   reuseFormula, 
   editFormulaName, 
   currentPeriod,
-  variables // Add this prop
+  variables = {} // Valor por defecto para evitar errores
 }) {
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState('');
@@ -40,10 +40,29 @@ function FormulaHistory({
     }
   };
 
+  // Función helper para obtener variables usadas en una fórmula
+  const getUsedVariables = (formulaEntry) => {
+    if (!variables || typeof variables !== 'object') {
+      return 'Ninguna';
+    }
+
+    try {
+      const usedVars = Object.keys(variables).filter(varName => {
+        const regex = new RegExp(`\\b${varName}\\b`);
+        return regex.test(formulaEntry.originalFormula || '');
+      });
+      
+      return usedVars.length > 0 ? usedVars.join(', ') : 'Ninguna';
+    } catch (error) {
+      console.error('Error al determinar variables usadas:', error);
+      return 'Error al determinar';
+    }
+  };
+
   // Filtrar fórmulas según el término de búsqueda
-  const filteredFormulas = savedFormulas.filter(formula =>
-    formula.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    formula.originalFormula.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFormulas = (savedFormulas || []).filter(formula =>
+    (formula.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (formula.originalFormula || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Paginación
@@ -66,7 +85,7 @@ function FormulaHistory({
       </div>
       
       {/* Buscador de fórmulas */}
-      {savedFormulas.length > 0 && (
+      {(savedFormulas || []).length > 0 && (
         <div className="mb-4">
           <div className="relative">
             <input
@@ -91,7 +110,7 @@ function FormulaHistory({
           </div>
           {searchTerm && (
             <p className="text-sm text-gray-500 mt-2">
-              Mostrando {filteredFormulas.length} de {savedFormulas.length} fórmulas
+              Mostrando {filteredFormulas.length} de {(savedFormulas || []).length} fórmulas
             </p>
           )}
         </div>
@@ -103,7 +122,7 @@ function FormulaHistory({
           className="space-y-3 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
           style={{ minHeight: '550px' }}
         >
-          {savedFormulas.length === 0 ? (
+          {(!savedFormulas || savedFormulas.length === 0) ? (
             <p className="text-gray-500 text-center py-4">
               No hay fórmulas calculadas
             </p>
@@ -145,7 +164,7 @@ function FormulaHistory({
                   ) : (
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-bold text-gray-800">
-                        {formulaEntry.name}
+                        {formulaEntry.name || 'Fórmula sin nombre'}
                       </h3>
                       <button
                         onClick={() => startEditing(formulaEntry)}
@@ -161,7 +180,7 @@ function FormulaHistory({
                 {/* Contenido de la fórmula */}
                 <div className="mb-3">
                   <div className="text-sm font-medium text-gray-700 mb-1">
-                    Fórmula: {formulaEntry.originalFormula}
+                    Fórmula: {formulaEntry.originalFormula || 'No definida'}
                   </div>
                   <div className="text-xs text-gray-500 mb-1">
                     Evaluada: {formulaEntry.evaluatedFormula || 'Pendiente de cálculo'}
@@ -176,21 +195,16 @@ function FormulaHistory({
                     </div>
                   )}
                   
-                  {/* Indicador de variables usadas */}
+                  {/* Indicador de variables usadas - CORREGIDO */}
                   <div className="text-xs text-gray-400 mt-1">
-                    Variables utilizadas: {
-                      Object.keys(variables).filter(varName => {
-                        const regex = new RegExp(`\\b${varName}\\b`);
-                        return regex.test(formulaEntry.originalFormula);
-                      }).join(', ') || 'Ninguna'
-                    }
+                    Variables utilizadas: {getUsedVariables(formulaEntry)}
                   </div>
                 </div>
 
                 {/* Botones de acción y fecha */}
                 <div className="flex items-center justify-between">
                   <div className="text-xs text-gray-400">
-                    {formulaEntry.date} - {formulaEntry.timestamp}
+                    {formulaEntry.date || 'Sin fecha'} - {formulaEntry.timestamp || 'Sin hora'}
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -246,10 +260,10 @@ function FormulaHistory({
       )}
 
       {/* Estadísticas */}
-      {savedFormulas.length > 0 && (
+      {(savedFormulas || []).length > 0 && (
         <div className="p-3 bg-blue-50 rounded-lg">
           <div className="text-sm text-blue-700">
-            📊 Total de fórmulas guardadas: <span className="font-bold">{savedFormulas.length}</span>
+            📊 Total de fórmulas guardadas: <span className="font-bold">{(savedFormulas || []).length}</span>
             {searchTerm && (
               <span className="ml-2">
                 | Filtradas: <span className="font-bold">{filteredFormulas.length}</span>
