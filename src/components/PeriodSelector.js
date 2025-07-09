@@ -5,6 +5,7 @@ function PeriodSelector({
   currentPeriod, 
   setCurrentPeriod, 
   createNewPeriod,
+  deletePeriod, // Nueva prop
   copyVariablesFromPreviousPeriod,
   copyFormulasFromPreviousPeriod
 }) {
@@ -55,6 +56,10 @@ function PeriodSelector({
     setCopyVariables(true);
     setCopyFormulas(true);
     setSourcePeriod('');
+  };
+
+  const handleDeletePeriod = (periodKey) => {
+    deletePeriod(periodKey);
   };
 
   const copyVariablesFromSpecificPeriod = (targetPeriod, sourcePeriodKey) => {
@@ -374,6 +379,14 @@ function PeriodSelector({
             disabled={availablePeriodsForCopy.length === 0}
           >
             📋 Fórmulas
+          </button>
+          <button
+            onClick={() => handleDeletePeriod(currentPeriod)}
+            className="bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700 transition duration-200"
+            title="Eliminar período actual"
+            disabled={Object.keys(periods).length === 1}
+          >
+            🗑️ Eliminar
           </button>
         </div>
       </div>
