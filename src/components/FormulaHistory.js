@@ -181,6 +181,34 @@ function FormulaHistory({
     setCurrentPage(1);
   }, [searchTerm]);
 
+  // Calcular altura dinámica basada en el contenido
+  const calculateDynamicHeight = () => {
+    const formulaCount = (savedFormulas || []).length;
+    const filteredCount = filteredFormulas.length;
+    const displayCount = Math.min(filteredCount, itemsPerPage);
+    
+    // Altura base mínima cuando no hay fórmulas
+    const minHeight = 100; // 100px mínimo
+    
+    // Altura por fórmula (aproximadamente 140px por fórmula con análisis)
+    const heightPerFormula = 140;
+    
+    // Altura máxima (equivalente a 4 fórmulas aproximadamente)
+    const maxHeight = 550;
+    
+    if (formulaCount === 0) {
+      return minHeight;
+    }
+    
+    // Calcular altura basada en número de fórmulas a mostrar
+    const calculatedHeight = minHeight + (displayCount * heightPerFormula);
+    
+    // No exceder la altura máxima
+    return Math.min(calculatedHeight, maxHeight);
+  };
+
+  const dynamicHeight = calculateDynamicHeight();
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex items-center justify-between mb-4">
@@ -221,20 +249,27 @@ function FormulaHistory({
         </div>
       )}
       
-      {/* Lista de fórmulas con altura fija y scroll */}
+      {/* Lista de fórmulas con altura dinámica */}
       <div className="mb-4">
         <div 
-          className="space-y-3 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
-          style={{ minHeight: '550px' }}
+          className="space-y-3 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 transition-all duration-300"
+          style={{ 
+            height: `${dynamicHeight}px`,
+            maxHeight: '550px'
+          }}
         >
           {(!savedFormulas || savedFormulas.length === 0) ? (
-            <p className="text-gray-500 text-center py-4">
-              No hay fórmulas calculadas
-            </p>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500 text-center">
+                No hay fórmulas calculadas
+              </p>
+            </div>
           ) : filteredFormulas.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
-              No se encontraron fórmulas con el término "{searchTerm}"
-            </p>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500 text-center">
+                No se encontraron fórmulas con el término "{searchTerm}"
+              </p>
+            </div>
           ) : (
             currentFormulas.map((formulaEntry) => (
               <div
@@ -294,7 +329,7 @@ function FormulaHistory({
                     Resultado: {formulaEntry.result !== null && formulaEntry.result !== undefined ? formulaEntry.result : 'Pendiente'}
                   </div>
                   
-                  {/* Análisis de porcentaje - NUEVO */}
+                  {/* Análisis de porcentaje */}
                   {renderPercentageAnalysis(formulaEntry)}
                   
                   {formulaEntry.lastRecalculated && (
