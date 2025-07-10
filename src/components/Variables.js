@@ -14,11 +14,16 @@ function Variables({
   const [editingValue, setEditingValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8; // Número de variables por página
+  const [selectedVariables, setSelectedVariables] = useState(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(null);
+  const itemsPerPage = 8;
 
   const startEditing = (name, value) => {
     setEditingName(name);
     setEditingValue(value.toString());
+    setShowDropdown(null);
   };
 
   const saveEdit = (originalName) => {
@@ -43,6 +48,74 @@ function Variables({
     if (confirmDelete) {
       removeVariable(name);
     }
+    setShowDropdown(null);
+  };
+
+  // Función para iniciar modo eliminación desde el menú contextual
+  const startDeletionMode = () => {
+    setIsSelectionMode(true);
+    setSelectedVariables(new Set());
+    setShowDropdown(null);
+  };
+
+  // Funciones para selección múltiple
+  const cancelSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedVariables(new Set());
+  };
+
+  const toggleVariableSelection = (name) => {
+    const newSelection = new Set(selectedVariables);
+    if (newSelection.has(name)) {
+      newSelection.delete(name);
+    } else {
+      newSelection.add(name);
+    }
+    setSelectedVariables(newSelection);
+  };
+
+  const selectAllVariables = () => {
+    const allVariableNames = currentVariables.map(([name]) => name);
+    setSelectedVariables(new Set(allVariableNames));
+  };
+
+  const deselectAllVariables = () => {
+    setSelectedVariables(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedVariables.size === 0) {
+      alert('No hay variables seleccionadas para eliminar.');
+      return;
+    }
+
+    const variableNames = Array.from(selectedVariables);
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que quieres eliminar ${selectedVariables.size} variable${selectedVariables.size > 1 ? 's' : ''}?\n\n` +
+      `Variables a eliminar:\n${variableNames.join(', ')}\n\n` +
+      `Esta acción no se puede deshacer.`
+    );
+
+    if (confirmDelete) {
+      variableNames.forEach(name => removeVariable(name));
+      setSelectedVariables(new Set());
+      setIsSelectionMode(false);
+    }
+  };
+
+  // Función para duplicar variable
+  const duplicateVariable = (name, value) => {
+    let newName = `${name}_copia`;
+    let counter = 1;
+    
+    while (variables[newName]) {
+      newName = `${name}_copia${counter}`;
+      counter++;
+    }
+    
+    // Usar la función editVariable para agregar la nueva variable
+    editVariable(newName, value);
+    setShowDropdown(null);
   };
 
   // Filtrar variables según el término de búsqueda
@@ -61,29 +134,36 @@ function Variables({
     setCurrentPage(1);
   }, [searchTerm]);
 
+  // Resetear selección cuando cambie la página o búsqueda
+  React.useEffect(() => {
+    setSelectedVariables(new Set());
+  }, [currentPage, searchTerm]);
+
+  // Cerrar dropdown cuando se hace clic fuera
+  React.useEffect(() => {
+    const handleClickOutside = () => {
+      setShowDropdown(null);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   // Calcular altura dinámica basada en el contenido
   const calculateDynamicHeight = () => {
     const variableCount = Object.keys(variables).length;
     const filteredCount = filteredVariables.length;
     const displayCount = Math.min(filteredCount, itemsPerPage);
     
-    // Altura base mínima cuando no hay variables
-    const minHeight = 80; // 80px mínimo
-    
-    // Altura por variable (aproximadamente 60px por variable)
+    const minHeight = 80;
     const heightPerVariable = 60;
-    
-    // Altura máxima (equivalente a 6-7 variables)
     const maxHeight = 400;
     
     if (variableCount === 0) {
       return minHeight;
     }
     
-    // Calcular altura basada en número de variables a mostrar
     const calculatedHeight = minHeight + (displayCount * heightPerVariable);
-    
-    // No exceder la altura máxima
     return Math.min(calculatedHeight, maxHeight);
   };
 
@@ -91,9 +171,38 @@ function Variables({
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        Variables
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-semibold text-gray-800">
+          Variables
+        </h2>
+        
+        {/* Controles de selección múltiple - Solo en modo selección */}
+        {isSelectionMode && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={cancelSelectionMode}
+              className="px-3 py-1 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded transition duration-200"
+            >
+              ❌ Cancelar
+            </button>
+            
+            <button
+              onClick={selectedVariables.size === currentVariables.length ? deselectAllVariables : selectAllVariables}
+              className="px-3 py-1 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded transition duration-200"
+            >
+              {selectedVariables.size === currentVariables.length ? '❌ Deseleccionar' : '✅ Seleccionar todo'}
+            </button>
+            
+            <button
+              onClick={handleBulkDelete}
+              disabled={selectedVariables.size === 0}
+              className="px-3 py-1 text-sm bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded transition duration-200"
+            >
+              🗑️ Eliminar ({selectedVariables.size})
+            </button>
+          </div>
+        )}
+      </div>
       
       {/* Formulario para agregar variables */}
       <div className="mb-6">
@@ -178,59 +287,112 @@ function Variables({
             currentVariables.map(([name, value]) => (
               <div
                 key={name}
-                className="bg-gray-50 p-3 rounded-lg border-l-4 border-green-500 hover:bg-gray-100 transition-colors"
+                className={`bg-gray-50 p-3 rounded-lg border-l-4 transition-all duration-200 relative ${
+                  selectedVariables.has(name) 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-green-500 hover:bg-gray-100 hover:shadow-md'
+                }`}
+                onMouseEnter={() => setHoveredItem(name)}
+                onMouseLeave={() => setHoveredItem(null)}
               >
-                {editingName === name ? (
-                  // Modo edición
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-700 text-sm">
-                      {name} =
-                    </span>
+                <div className="flex items-center gap-2">
+                  {/* Checkbox solo en modo selección */}
+                  {isSelectionMode && (
                     <input
-                      type="number"
-                      value={editingValue}
-                      onChange={(e) => setEditingValue(e.target.value)}
-                      className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      onKeyPress={(e) => e.key === 'Enter' && saveEdit(name)}
-                      autoFocus
+                      type="checkbox"
+                      checked={selectedVariables.has(name)}
+                      onChange={() => toggleVariableSelection(name)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
-                    <button
-                      onClick={() => saveEdit(name)}
-                      className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                      title="Guardar cambios"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
-                      title="Cancelar edición"
-                    >
-                      ✕
-                    </button>
+                  )}
+                  
+                  <div className="flex-1">
+                    {editingName === name ? (
+                      // Modo edición
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-700 text-sm">
+                          {name} =
+                        </span>
+                        <input
+                          type="number"
+                          value={editingValue}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          onKeyPress={(e) => e.key === 'Enter' && saveEdit(name)}
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => saveEdit(name)}
+                          className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                          title="Guardar cambios"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                          title="Cancelar edición"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      // Modo visualización
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700">
+                          {name} = {value}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  // Modo visualización
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-700">
-                      {name} = {value}
-                    </span>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => startEditing(name, value)}
-                        className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded text-sm"
-                        title="Editar variable"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => handleRemoveVariable(name)}
-                        className="text-red-600 hover:text-red-800 px-2 py-1 rounded text-sm"
-                        title="Eliminar variable"
-                      >
-                        🗑️
-                      </button>
-                    </div>
+                </div>
+
+                {/* Menú contextual - Solo aparece en hover y fuera del modo selección */}
+                {!isSelectionMode && hoveredItem === name && editingName !== name && (
+                  <div className="absolute top-2 right-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDropdown(showDropdown === name ? null : name);
+                      }}
+                      className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200 border border-gray-200"
+                      title="Más opciones"
+                    >
+                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Dropdown menu */}
+                    {showDropdown === name && (
+                      <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                        <div className="py-1">
+                          <button
+                            onClick={() => startEditing(name, value)}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2"
+                          >
+                            <span>✏️</span>
+                            Editar valor
+                          </button>
+                          
+                          <button
+                            onClick={() => duplicateVariable(name, value)}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-600 flex items-center gap-2"
+                          >
+                            <span>📋</span>
+                            Duplicar variable
+                          </button>
+                          
+                          <button
+                            onClick={startDeletionMode}
+                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <span>🗑️</span>
+                            Eliminar variable
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -282,6 +444,11 @@ function Variables({
             {filteredVariables.length > itemsPerPage && (
               <span className="ml-2">
                 | Mostrando: <span className="font-bold">{currentVariables.length}</span>
+              </span>
+            )}
+            {isSelectionMode && selectedVariables.size > 0 && (
+              <span className="ml-2 text-blue-700">
+                | Seleccionadas: <span className="font-bold">{selectedVariables.size}</span>
               </span>
             )}
           </div>
