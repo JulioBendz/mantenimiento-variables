@@ -61,6 +61,34 @@ function Variables({
     setCurrentPage(1);
   }, [searchTerm]);
 
+  // Calcular altura dinámica basada en el contenido
+  const calculateDynamicHeight = () => {
+    const variableCount = Object.keys(variables).length;
+    const filteredCount = filteredVariables.length;
+    const displayCount = Math.min(filteredCount, itemsPerPage);
+    
+    // Altura base mínima cuando no hay variables
+    const minHeight = 80; // 80px mínimo
+    
+    // Altura por variable (aproximadamente 60px por variable)
+    const heightPerVariable = 60;
+    
+    // Altura máxima (equivalente a 6-7 variables)
+    const maxHeight = 400;
+    
+    if (variableCount === 0) {
+      return minHeight;
+    }
+    
+    // Calcular altura basada en número de variables a mostrar
+    const calculatedHeight = minHeight + (displayCount * heightPerVariable);
+    
+    // No exceder la altura máxima
+    return Math.min(calculatedHeight, maxHeight);
+  };
+
+  const dynamicHeight = calculateDynamicHeight();
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">
@@ -125,20 +153,27 @@ function Variables({
         </div>
       )}
 
-      {/* Lista de variables con altura fija y scroll */}
+      {/* Lista de variables con altura dinámica */}
       <div className="mb-4">
         <div 
-          className="space-y-2 max-h-80 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100"
-          style={{ minHeight: '400px' }}
+          className="space-y-2 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 transition-all duration-300"
+          style={{ 
+            height: `${dynamicHeight}px`,
+            maxHeight: '400px'
+          }}
         >
           {Object.keys(variables).length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
-              No hay variables definidas
-            </p>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500 text-center">
+                No hay variables definidas
+              </p>
+            </div>
           ) : filteredVariables.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
-              No se encontraron variables con el término "{searchTerm}"
-            </p>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500 text-center">
+                No se encontraron variables con el término "{searchTerm}"
+              </p>
+            </div>
           ) : (
             currentVariables.map(([name, value]) => (
               <div
