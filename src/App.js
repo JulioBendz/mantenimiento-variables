@@ -598,13 +598,6 @@ function App() {
             currentPeriod={periods[currentPeriod]?.name}
           />
         </div>
-        
-        {/* Panel de información simple */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600">
-            🌐 Host: {window.location.hostname}:{window.location.port || '3000'} | API: {API_URL}
-          </div>
-        )}
       </div>
     </div>
   );
