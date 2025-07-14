@@ -6,6 +6,9 @@ import Variables from './components/Variables';
 import FormulaHistory from './components/FormulaHistory';
 import Calculator from './components/Calculator';
 
+// Configuración simple para API futura
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
 function App() {
   // Función para obtener la clave del período actual (mes/año actual)
   const getCurrentPeriodKey = () => {
@@ -595,6 +598,13 @@ function App() {
             currentPeriod={periods[currentPeriod]?.name}
           />
         </div>
+        
+        {/* Panel de información simple */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600">
+            🌐 Host: {window.location.hostname}:{window.location.port || '3000'} | API: {API_URL}
+          </div>
+        )}
       </div>
     </div>
   );
