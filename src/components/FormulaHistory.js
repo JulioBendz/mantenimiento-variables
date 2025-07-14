@@ -19,6 +19,8 @@ function FormulaHistory({
   const [deleteControlsPosition, setDeleteControlsPosition] = useState({ id: null, show: false });
   const deleteControlsRef = useRef(null);
   const itemsPerPage = 6;
+  const [excellentMin, setExcellentMin] = useState(90);
+  const [acceptableMin, setAcceptableMin] = useState(70);
 
   const startEditing = (formula) => {
     setEditingId(formula.id);
@@ -187,7 +189,7 @@ function FormulaHistory({
   // Función para detectar si es un porcentaje y categorizar el resultado
   const analyzePercentageResult = (formulaEntry) => {
     const { result, name, originalFormula } = formulaEntry;
-    
+
     if (result === 'Error en la fórmula' || result === null || result === undefined) {
       return null;
     }
@@ -196,7 +198,7 @@ function FormulaHistory({
     if (isNaN(numResult)) return null;
 
     // Detectar si es un porcentaje basado en varios criterios
-    const isPercentage = 
+    const isPercentage =
       // 1. Nombre contiene palabras relacionadas con porcentaje
       /\b(porcentaje|percent|%|eficiencia|efectividad|cumplimiento|rendimiento|desempeño|avance|progreso|satisfacción|calificación|nota|puntuación|score)\b/i.test(name) ||
       
@@ -216,7 +218,7 @@ function FormulaHistory({
     }
 
     // Categorizar según el rango
-    if (normalizedResult >= 90 && normalizedResult <= 100) {
+    if (normalizedResult >= excellentMin && normalizedResult <= 100) {
       return {
         category: 'excellent',
         label: 'Excelente',
@@ -227,7 +229,7 @@ function FormulaHistory({
         description: 'Resultado sobresaliente',
         percentage: normalizedResult
       };
-    } else if (normalizedResult >= 70 && normalizedResult < 90) {
+    } else if (normalizedResult >= acceptableMin && normalizedResult < excellentMin) {
       return {
         category: 'acceptable',
         label: 'Satisfactorio',
@@ -238,7 +240,7 @@ function FormulaHistory({
         description: 'Resultado aceptable, hay margen de mejora',
         percentage: normalizedResult
       };
-    } else if (normalizedResult < 70) {
+    } else if (normalizedResult < acceptableMin) {
       return {
         category: 'critical',
         label: 'Crítico',
@@ -385,6 +387,37 @@ function FormulaHistory({
               Mostrando {filteredFormulas.length} de {(savedFormulas || []).length} fórmulas
             </p>
           )}
+        </div>
+      )}
+      
+      {/* Filtros de porcentaje */}
+      {(savedFormulas || []).length > 0 && (
+        <div className="mb-4 flex gap-4 items-center">
+          <label className="text-sm text-gray-700">
+            Excelente ≥
+            <input
+              type="number"
+              value={excellentMin}
+              min={0}
+              max={100}
+              onChange={e => setExcellentMin(Number(e.target.value))}
+              className="mx-1 w-16 px-2 py-1 border rounded"
+            />
+            %
+          </label>
+          <label className="text-sm text-gray-700">
+            Satisfactorio ≥
+            <input
+              type="number"
+              value={acceptableMin}
+              min={0}
+              max={excellentMin}
+              onChange={e => setAcceptableMin(Number(e.target.value))}
+              className="mx-1 w-16 px-2 py-1 border rounded"
+            />
+            %
+          </label>
+          <span className="text-sm text-gray-700">Crítico {'<'} {acceptableMin}%</span>
         </div>
       )}
       
