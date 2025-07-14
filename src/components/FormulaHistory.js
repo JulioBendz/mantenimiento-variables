@@ -179,19 +179,27 @@ function FormulaHistory({
     const numResult = typeof result === 'number' ? result : parseFloat(result);
     if (isNaN(numResult)) return null;
 
+    // Detectar si es un porcentaje basado en varios criterios
     const isPercentage = 
+      // 1. Nombre contiene palabras relacionadas con porcentaje
       /\b(porcentaje|percent|%|eficiencia|efectividad|cumplimiento|rendimiento|desempeño|avance|progreso|satisfacción|calificación|nota|puntuación|score)\b/i.test(name) ||
+      
+      // 2. Fórmula contiene operaciones típicas de porcentaje
       /\*\s*100|\*100|\/\s*100|\/100|\%/i.test(originalFormula) ||
+      
+      // 3. El resultado está en rango típico de porcentaje (0-100 o 0-1)
       (numResult >= 0 && numResult <= 100) ||
       (numResult >= 0 && numResult <= 1 && originalFormula.includes('/'));
 
     if (!isPercentage) return null;
 
+    // Normalizar el resultado a escala 0-100
     let normalizedResult = numResult;
     if (numResult >= 0 && numResult <= 1) {
       normalizedResult = numResult * 100;
     }
 
+    // Categorizar según el rango
     if (normalizedResult >= 90 && normalizedResult <= 100) {
       return {
         category: 'excellent',
@@ -230,6 +238,7 @@ function FormulaHistory({
     return null;
   };
 
+  // Función para renderizar el análisis de porcentaje
   const renderPercentageAnalysis = (formulaEntry) => {
     const analysis = analyzePercentageResult(formulaEntry);
     
@@ -247,6 +256,7 @@ function FormulaHistory({
               {analysis.description}
             </div>
           </div>
+          {/* Barra de progreso visual */}
           <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div 
               className={`h-full transition-all duration-300 ${
@@ -299,15 +309,23 @@ function FormulaHistory({
     const filteredCount = filteredFormulas.length;
     const displayCount = Math.min(filteredCount, itemsPerPage);
     
-    const minHeight = 100;
+    // Altura base mínima cuando no hay fórmulas
+    const minHeight = 100; // 100px mínimo
+    
+    // Altura por fórmula (aproximadamente 140px por fórmula con análisis)
     const heightPerFormula = 140;
+    
+    // Altura máxima (equivalente a 4 fórmulas aproximadamente)
     const maxHeight = 550;
     
     if (formulaCount === 0) {
       return minHeight;
     }
     
+    // Calcular altura basada en número de fórmulas a mostrar
     const calculatedHeight = minHeight + (displayCount * heightPerFormula);
+    
+    // No exceder la altura máxima
     return Math.min(calculatedHeight, maxHeight);
   };
 
