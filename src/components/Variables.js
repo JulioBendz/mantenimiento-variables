@@ -51,7 +51,7 @@ function Variables({
     setShowDropdown(null);
   };
 
-  // Función para iniciar modo eliminación desde el menú contextual
+  // Función para activar modo eliminación con checkboxes
   const startDeletionMode = () => {
     setIsSelectionMode(true);
     setSelectedVariables(new Set());
