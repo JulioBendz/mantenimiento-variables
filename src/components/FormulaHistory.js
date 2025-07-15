@@ -231,8 +231,8 @@ function FormulaHistory({
       };
     } else if (normalizedResult >= acceptableMin && normalizedResult < excellentMin) {
       return {
-        category: 'acceptable',
-        label: 'Satisfactorio',
+        category: 'intermediate',
+        label: 'Intermedio',
         icon: '⚠️',
         color: 'text-yellow-600',
         bgColor: 'bg-yellow-50',
@@ -350,6 +350,25 @@ function FormulaHistory({
 
   const dynamicHeight = calculateDynamicHeight();
 
+  React.useEffect(() => {
+    if (acceptableMin > excellentMin) setAcceptableMin(excellentMin);
+    if (excellentMin > 100) setExcellentMin(100);
+    if (acceptableMin < 0) setAcceptableMin(0);
+    if (excellentMin < 0) setExcellentMin(0);
+  }, [excellentMin, acceptableMin]);
+
+  React.useEffect(() => {
+    const savedExcellent = localStorage.getItem('excellentMin');
+    const savedAcceptable = localStorage.getItem('acceptableMin');
+    if (savedExcellent) setExcellentMin(Number(savedExcellent));
+    if (savedAcceptable) setAcceptableMin(Number(savedAcceptable));
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem('excellentMin', excellentMin);
+    localStorage.setItem('acceptableMin', acceptableMin);
+  }, [excellentMin, acceptableMin]);
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex items-center justify-between mb-4">
@@ -406,7 +425,7 @@ function FormulaHistory({
             %
           </label>
           <label className="text-sm text-gray-700">
-            Satisfactorio ≥
+            Intermedio ≥
             <input
               type="number"
               value={acceptableMin}
@@ -418,6 +437,21 @@ function FormulaHistory({
             %
           </label>
           <span className="text-sm text-gray-700">Crítico {'<'} {acceptableMin}%</span>
+          <div className="relative group ml-2">
+    <button
+      type="button"
+      className="text-blue-600 hover:text-blue-800 focus:outline-none"
+      aria-label="Ayuda sobre los rangos"
+    >
+      ℹ️
+    </button>
+    <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-white border border-gray-300 rounded shadow-lg p-2 text-xs text-gray-700 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 z-10">
+      Puedes ajustar los rangos para categorizar los resultados:<br />
+      <b>Excelente</b>: resultado igual o mayor a {excellentMin}%<br />
+      <b>Intermedio</b>: resultado igual o mayor a {acceptableMin}% y menor que {excellentMin}%<br />
+      <b>Crítico</b>: resultado menor a {acceptableMin}%
+    </div>
+  </div>
         </div>
       )}
       
@@ -736,7 +770,7 @@ function FormulaHistory({
                 <div className="text-xs text-blue-600 mt-2 flex items-center gap-4">
                   <span>📈 Análisis de porcentajes:</span>
                   <span className="text-green-600">✅ Excelentes: {percentageStats.excellent}</span>
-                  <span className="text-yellow-600">⚠️ Satisfactorios: {percentageStats.acceptable}</span>
+                  <span className="text-yellow-600">⚠️ Intermedio: {percentageStats.acceptable}</span>
                   <span className="text-red-600">❌ Críticos: {percentageStats.critical}</span>
                 </div>
               );
