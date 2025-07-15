@@ -5,9 +5,11 @@ import PeriodSelector from './components/PeriodSelector';
 import Variables from './components/Variables';
 import FormulaHistory from './components/FormulaHistory';
 import Calculator from './components/Calculator';
+import { create, all } from 'mathjs';
 
 // Configuración simple para API futura
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const math = create(all);
 
 function App() {
   // Función para obtener la clave del período actual (mes/año actual)
@@ -82,8 +84,8 @@ function App() {
           evaluableFormula = evaluableFormula.replace(regex, periodData.variables[varName]);
         });
         
-        // Calcular nuevo resultado
-        const calculatedResult = Function(`"use strict"; return (${evaluableFormula})`)();
+        // Calcular nuevo resultado con mathjs
+        const calculatedResult = math.evaluate(evaluableFormula);
         
         return {
           ...formula,
@@ -124,8 +126,8 @@ function App() {
           evaluableFormula = evaluableFormula.replace(regex, periodData.variables[varName]);
         });
         
-        // Calcular nuevo resultado
-        const calculatedResult = Function(`"use strict"; return (${evaluableFormula})`)();
+        // Calcular nuevo resultado con mathjs
+        const calculatedResult = math.evaluate(evaluableFormula);
         
         // Verificar si el resultado realmente cambió
         const resultChanged = formula.result !== calculatedResult;
@@ -412,15 +414,14 @@ function App() {
   const calculateFormula = () => {
     try {
       const currentData = getCurrentPeriodData();
-      
-      // Reemplazar variables en la fórmula
       let evaluableFormula = formula;
       Object.keys(currentData.variables).forEach(varName => {
         const regex = new RegExp(`\\b${varName}\\b`, 'g');
         evaluableFormula = evaluableFormula.replace(regex, currentData.variables[varName]);
       });
-      
-      const calculatedResult = Function(`"use strict"; return (${evaluableFormula})`)();
+
+      // Usa mathjs aquí
+      const calculatedResult = math.evaluate(evaluableFormula);
       setResult(calculatedResult);
       
       const finalFormulaName = formulaName || `Fórmula ${Date.now()}`;
