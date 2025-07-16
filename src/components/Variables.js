@@ -351,7 +351,7 @@ function Variables({
                   setShowDropdown(showDropdown === name ? null : name);
                 }}
                 onDropdownClose={() => setShowDropdown(null)}
-                onDeletePanelClose={() => setDeleteControlsPosition({ name: null, show: false })}
+                onDeletePanelClose={cancelSelectionMode}
                 onBulkDelete={handleBulkDelete}
                 onSelectAll={selectAllVariables}
                 onDeselectAll={deselectAllVariables}
