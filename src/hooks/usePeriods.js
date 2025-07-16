@@ -340,14 +340,10 @@ export function usePeriods() {
   const calculateFormula = () => {
     try {
       const currentData = getCurrentPeriodData();
-      // Reemplazo para mostrar en la UI
-      let evaluableFormula = formula;
-      Object.keys(currentData.variables).forEach(varName => {
-        const regex = new RegExp(`\\b${varName}\\b`, 'g');
-        evaluableFormula = evaluableFormula.replace(regex, currentData.variables[varName]);
-      });
+      // Limpia la fórmula antes de evaluar y guardar
+      const cleanFormula = formula.replace(/\r?\n|\r/g, ' ').trim();
       // Evaluación centralizada
-      const calculatedResult = evaluateFormula(formula, currentData.variables);
+      const calculatedResult = evaluateFormula(cleanFormula, currentData.variables);
       setResult(calculatedResult);
       const finalFormulaName = formulaName || `Fórmula ${Date.now()}`;
       const existingFormula = currentData.formulas.find(f => f.name === finalFormulaName);
@@ -364,8 +360,8 @@ export function usePeriods() {
               f.name === finalFormulaName
                 ? {
                   ...f,
-                  originalFormula: formula,
-                  evaluatedFormula: evaluableFormula,
+                  originalFormula: cleanFormula,
+                  evaluatedFormula: cleanFormula, // lo que uses para mostrar
                   result: calculatedResult,
                   timestamp: new Date().toLocaleTimeString(),
                   date: new Date().toLocaleDateString(),
@@ -379,8 +375,8 @@ export function usePeriods() {
         const newFormulaEntry = {
           id: Date.now(),
           name: finalFormulaName,
-          originalFormula: formula,
-          evaluatedFormula: evaluableFormula,
+          originalFormula: cleanFormula,
+          evaluatedFormula: cleanFormula, // lo que uses para mostrar
           result: calculatedResult,
           timestamp: new Date().toLocaleTimeString(),
           date: new Date().toLocaleDateString(),
