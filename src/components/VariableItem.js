@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 function VariableItem({
   name,
@@ -34,6 +34,14 @@ function VariableItem({
   toggleVariableSelection,
   handleBulkDelete
 }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    onCopy();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1000);
+  };
+
   return (
     <div className="relative">
       <div
@@ -55,11 +63,23 @@ function VariableItem({
           )}
           {/* Icono de copia */}
           <button
-            onClick={onCopy}
+            onClick={handleCopy}
             className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition duration-200"
             title={`Copiar variable "${name}" al portapapeles`}
           >
-            <span id={`copy-${name}`} className="text-sm">📄</span>
+            {copied ? (
+              <span className="flex items-center text-green-600 gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-xs">Copiado</span>
+              </span>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" />
+                <rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" />
+              </svg>
+            )}
           </button>
           <div className="flex-1">
             {editingName === name ? (

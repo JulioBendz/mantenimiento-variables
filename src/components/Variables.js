@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import VariableItem from './VariableItem';
 
 function Variables({ 
@@ -229,6 +229,13 @@ function Variables({
   };
 
   const dynamicHeight = calculateDynamicHeight();
+
+  // Cuando cambie la página, resetea el modo eliminación y selección
+  useEffect(() => {
+    setDeleteControlsPosition({ name: null, show: false });
+    setIsSelectionMode(false);
+    setSelectedVariables(new Set());
+  }, [currentPage]);
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
