@@ -400,6 +400,11 @@ function FormulaHistory({
                 getUsedVariables={getUsedVariables}
                 excellentMin={excellentMin}
                 acceptableMin={acceptableMin}
+                currentFormulas={currentFormulas}
+                selectAllFormulas={selectAllFormulas}
+                deselectAllFormulas={deselectAllFormulas}
+                handleBulkDelete={handleBulkDelete}
+                cancelSelectionMode={cancelSelectionMode}
               />
             ))
           )}
