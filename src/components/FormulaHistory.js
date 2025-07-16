@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { analyzePercentageResult, renderPercentageAnalysis } from '../utils/formulaHistoryUtils';
 import FormulaItem from './FormulaItem';
 
@@ -267,6 +267,12 @@ function FormulaHistory({
   };
 
   const dynamicHeight = calculateDynamicHeight();
+
+  useEffect(() => {
+  setDeleteControlsPosition({ id: null, show: false });
+  setIsSelectionMode(false);
+  setSelectedFormulas(new Set());
+  }, [currentPage]);
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
