@@ -9,6 +9,23 @@ function Calculator({
   result, 
   variables 
 }) {
+  const insertSymbol = (symbol) => {
+    // Inserta el símbolo en la posición actual del cursor
+    const textarea = document.getElementById('formula-textarea');
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newValue = formula.slice(0, start) + symbol + formula.slice(end);
+      setFormula(newValue);
+      setTimeout(() => {
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + symbol.length;
+      }, 0);
+    } else {
+      setFormula(formula + symbol);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">
@@ -36,7 +53,21 @@ function Calculator({
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Fórmula matemática:
         </label>
+        <div className="mb-2 flex gap-2 flex-wrap">
+          {['+', '-', '*', '/', '(', ')', '**', '^', '%', ','].map((symbol) => (
+            <button
+              key={symbol}
+              type="button"
+              className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+              onClick={() => insertSymbol(symbol)}
+              title={`Insertar "${symbol}"`}
+            >
+              {symbol}
+            </button>
+          ))}
+        </div>
         <textarea
+          id="formula-textarea"
           placeholder="Ej: x + y * 2, a^2 + b^2, (velocidad * tiempo) / 2"
           value={formula}
           onChange={(e) => setFormula(e.target.value)}

@@ -342,8 +342,10 @@ export function usePeriods() {
       const currentData = getCurrentPeriodData();
       // Limpia la fórmula antes de evaluar y guardar
       const cleanFormula = formula.replace(/\r?\n|\r/g, ' ').trim();
+      // Reemplaza ^ por ** para la evaluación
+      let formulaToEval = cleanFormula.replace(/\^/g, '**');
       // Evaluación centralizada
-      const calculatedResult = evaluateFormula(cleanFormula, currentData.variables);
+      const calculatedResult = evaluateFormula(formulaToEval, currentData.variables);
       setResult(calculatedResult);
       const finalFormulaName = formulaName || `Fórmula ${Date.now()}`;
       const existingFormula = currentData.formulas.find(f => f.name === finalFormulaName);
@@ -360,8 +362,8 @@ export function usePeriods() {
               f.name === finalFormulaName
                 ? {
                   ...f,
-                  originalFormula: cleanFormula,
-                  evaluatedFormula: cleanFormula, // lo que uses para mostrar
+                  originalFormula: formulaToEval,
+                  evaluatedFormula: formulaToEval, // lo que uses para mostrar
                   result: calculatedResult,
                   timestamp: new Date().toLocaleTimeString(),
                   date: new Date().toLocaleDateString(),
@@ -375,8 +377,8 @@ export function usePeriods() {
         const newFormulaEntry = {
           id: Date.now(),
           name: finalFormulaName,
-          originalFormula: cleanFormula,
-          evaluatedFormula: cleanFormula, // lo que uses para mostrar
+          originalFormula: formulaToEval,
+          evaluatedFormula: formulaToEval, // lo que uses para mostrar
           result: calculatedResult,
           timestamp: new Date().toLocaleTimeString(),
           date: new Date().toLocaleDateString(),

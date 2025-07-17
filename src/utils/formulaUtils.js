@@ -8,16 +8,17 @@ const math = create(all);
  * @param {object} variables - Un objeto con los valores de las variables, ej: { a: 2, b: 3, c: 4 }
  * @returns {number|string} - El resultado numérico o un mensaje de error
  */
-export function evaluateFormula(formula, variables = {}) {
+export function evaluateFormula(formula, variables) {
   try {
-    // Reemplaza cada variable en la fórmula por su valor
     let evaluableFormula = formula;
+    // Reemplaza cada variable por su valor
     Object.keys(variables).forEach(varName => {
       const regex = new RegExp(`\\b${varName}\\b`, 'g');
       evaluableFormula = evaluableFormula.replace(regex, variables[varName]);
     });
-    // Evalúa con mathjs
-    return math.evaluate(evaluableFormula);
+    // Evalúa la fórmula
+    // eslint-disable-next-line no-new-func
+    return Function(`"use strict";return (${evaluableFormula})`)();
   } catch (error) {
     return 'Error en la fórmula';
   }
