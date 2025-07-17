@@ -10,7 +10,8 @@ const math = create(all);
  */
 export function evaluateFormula(formula, variables) {
   try {
-    let evaluableFormula = formula;
+    // Convierte comas decimales a puntos
+    let evaluableFormula = formula.replace(/(\d+),(\d+)/g, '$1.$2');
     // Reemplaza cada variable por su valor
     Object.keys(variables).forEach(varName => {
       const regex = new RegExp(`\\b${varName}\\b`, 'g');

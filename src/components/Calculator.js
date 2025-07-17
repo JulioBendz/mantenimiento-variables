@@ -54,7 +54,7 @@ function Calculator({
           Fórmula matemática:
         </label>
         <div className="mb-2 flex gap-2 flex-wrap">
-          {['+', '-', '*', '/', '(', ')', '**', '^', '%', ','].map((symbol) => (
+          {['+', '-', '*', '/', '(', ')', '**', '^', '%', '.'].map((symbol) => (
             <button
               key={symbol}
               type="button"
@@ -74,7 +74,7 @@ function Calculator({
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-none"
         />
         <p className="text-xs text-gray-500 mt-1">
-          Usa los nombres de variables definidas arriba. Operadores: +, -, *, /, **, ()
+          Usa los nombres de variables definidas. Operadores.
         </p>
       </div>
 
