@@ -23,6 +23,7 @@ function FormulaHistory({
   const itemsPerPage = 6;
   const [excellentMin, setExcellentMin] = useState(90);
   const [acceptableMin, setAcceptableMin] = useState(70);
+  const [editingFilters, setEditingFilters] = useState(false);
 
   const startEditing = (formula) => {
     setEditingId(formula.id);
@@ -317,46 +318,86 @@ function FormulaHistory({
       {/* Filtros de porcentaje */}
       {(savedFormulas || []).length > 0 && (
         <div className="mb-4 flex gap-4 items-center">
-          <label className="text-sm text-gray-700">
-            Excelente ≥
-            <input
-              type="number"
-              value={excellentMin}
-              min={0}
-              max={100}
-              onChange={e => setExcellentMin(Number(e.target.value))}
-              className="mx-1 w-16 px-2 py-1 border rounded"
-            />
-            %
-          </label>
-          <label className="text-sm text-gray-700">
-            Intermedio ≥
-            <input
-              type="number"
-              value={acceptableMin}
-              min={0}
-              max={excellentMin}
-              onChange={e => setAcceptableMin(Number(e.target.value))}
-              className="mx-1 w-16 px-2 py-1 border rounded"
-            />
-            %
-          </label>
-          <span className="text-sm text-gray-700">Crítico {'<'} {acceptableMin}%</span>
-          <div className="relative group ml-2">
-    <button
-      type="button"
-      className="text-blue-600 hover:text-blue-800 focus:outline-none"
-      aria-label="Ayuda sobre los rangos"
-    >
-      ℹ️
-    </button>
-    <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-white border border-gray-300 rounded shadow-lg p-2 text-xs text-gray-700 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 z-10">
-      Puedes ajustar los rangos para categorizar los resultados:<br />
-      <b>Excelente</b>: resultado igual o mayor a {excellentMin}%<br />
-      <b>Intermedio</b>: resultado igual o mayor a {acceptableMin}% y menor que {excellentMin}%<br />
-      <b>Crítico</b>: resultado menor a {acceptableMin}%
-    </div>
-  </div>
+          {editingFilters ? (
+            <>
+              <label className="text-sm text-gray-700">
+                Excelente ≥
+                <input
+                  type="number"
+                  value={excellentMin}
+                  min={0}
+                  max={100}
+                  onChange={e => setExcellentMin(Number(e.target.value))}
+                  className="mx-1 w-16 px-2 py-1 border rounded"
+                />
+                %
+              </label>
+              <label className="text-sm text-gray-700">
+                Intermedio ≥
+                <input
+                  type="number"
+                  value={acceptableMin}
+                  min={0}
+                  max={excellentMin}
+                  onChange={e => setAcceptableMin(Number(e.target.value))}
+                  className="mx-1 w-16 px-2 py-1 border rounded"
+                />
+                %
+              </label>
+              <span className="text-sm text-gray-700">Crítico {'<'} {acceptableMin}%</span>
+              <div className="flex flex-col gap-2 ml-2">
+                <button
+                  type="button"
+                  className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                  onClick={() => setEditingFilters(false)}
+                >
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  className="px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                  onClick={() => setEditingFilters(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="text-sm text-gray-700">
+                Excelente ≥ <b>{excellentMin}%</b>
+              </span>
+              <span className="text-sm text-gray-700">
+                Intermedio ≥ <b>{acceptableMin}%</b>
+              </span>
+              <span className="text-sm text-gray-700">
+                Crítico {'<'} <b>{acceptableMin}%</b>
+              </span>
+              <button
+                type="button"
+                className="ml-2 text-blue-600 hover:text-blue-800"
+                onClick={() => setEditingFilters(true)}
+                title="Editar rangos"
+              >
+                ✏️
+              </button>
+              <div className="relative group ml-2">
+                <button
+                  type="button"
+                  className="text-blue-600 hover:text-blue-800 focus:outline-none"
+                  aria-label="Ayuda sobre los rangos"
+                >
+                  ℹ️
+                </button>
+                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-white border border-gray-300 rounded shadow-lg p-2 text-xs text-gray-700 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 z-10">
+                  Puedes ajustar los rangos para categorizar los resultados:<br />
+                  <b>Excelente</b>: resultado igual o mayor a {excellentMin}%<br />
+                  <b>Intermedio</b>: resultado igual o mayor a {acceptableMin}% y menor que {excellentMin}%<br />
+                  <b>Crítico</b>: resultado menor a {acceptableMin}%
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
       
