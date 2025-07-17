@@ -9,8 +9,15 @@ const formulaEntry = {
 };
 
 test('muestra el nombre y resultado de la fórmula', () => {
-  render(<FormulaItem formulaEntry={formulaEntry} />);
+  render(
+    <FormulaItem
+      formulaEntry={formulaEntry}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
   expect(screen.getByText(/Fórmula 1/i)).toBeInTheDocument();
   expect(screen.getByText(/x\+1/i)).toBeInTheDocument();
-  expect(screen.getByText(/2/)).toBeInTheDocument();
+  expect(screen.getAllByText(/2/).length).toBeGreaterThan(0);
+  expect(screen.getByText(/Variables utilizadas: x/i)).toBeInTheDocument();
 });
