@@ -1,4 +1,4 @@
-import { analyzePercentageResult } from './formulaHistoryUtils';
+import { analyzePercentageResult } from '../utils/formulaHistoryUtils';
 
 test('categoriza correctamente el resultado excelente', () => {
   const formulaEntry = { result: 95 };

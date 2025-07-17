@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import VariableItem from './VariableItem';
+import VariableItem from '../components/VariableItem';
 
 test('muestra el nombre y valor de la variable', () => {
   render(<VariableItem name="x" value={10} />);
