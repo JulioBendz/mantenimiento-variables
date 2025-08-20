@@ -33,3 +33,19 @@ test('permite agregar una variable', () => {
   fireEvent.click(screen.getByText(/Agregar Variable/i));
   expect(addVariable).toHaveBeenCalled();
 });
+
+test('muestra mensaje cuando no hay variables definidas', () => {
+  render(
+    <Variables
+      variables={{}}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  expect(screen.getByText(/No hay variables definidas/i)).toBeInTheDocument();
+});
