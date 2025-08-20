@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import Variables from '../components/Variables';
 import React from 'react';
+import VariableItem from '../components/VariableItem';
 
 test('muestra el título de variables', () => {
   render(
@@ -25,12 +26,13 @@ test('permite agregar una variable', () => {
       setVariableName={() => {}}
       setVariableValue={() => {}}
       variableName="x"
-      variableValue="5"
+      variableValue="10"
       removeVariable={() => {}}
       editVariable={() => {}}
     />
   );
-  fireEvent.click(screen.getByText(/Agregar Variable/i));
+  const button = screen.getByText(/Agregar Variable/i);
+  fireEvent.click(button);
   expect(addVariable).toHaveBeenCalled();
 });
 
@@ -48,4 +50,91 @@ test('muestra mensaje cuando no hay variables definidas', () => {
     />
   );
   expect(screen.getByText(/No hay variables definidas/i)).toBeInTheDocument();
+});
+
+test('permite editar una variable', () => {
+  const editVariable = jest.fn();
+
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={editVariable}
+    />
+  );
+  // Simula hover y abre el menú contextual
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Editar valor/i));
+  // Cambia el valor en el input de edición
+  const input = screen.getByDisplayValue('10');
+  fireEvent.change(input, { target: { value: '20' } });
+  // Guarda los cambios
+  fireEvent.click(screen.getByTitle(/Guardar cambios/i));
+  expect(editVariable).toHaveBeenCalledWith('x', 20);
+});
+
+test('permite buscar una variable por nombre', () => {
+  render(
+    <Variables
+      variables={{ x: 10, y: 20 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  const searchInput = screen.getByPlaceholderText(/Buscar variable por nombre/i);
+  fireEvent.change(searchInput, { target: { value: 'y' } });
+  expect(screen.getByText(/y = 20/i)).toBeInTheDocument();
+  expect(screen.queryByText(/x = 10/i)).not.toBeInTheDocument();
+});
+
+test('llama a startDirectDeletion al hacer clic en Eliminar', () => {
+  const startDirectDeletion = jest.fn();
+  render(
+    <VariableItem
+      name="x"
+      value={10}
+      hoveredItem="x"
+      showDropdown="x"
+      isSelectionMode={false}
+      editingName={null}
+      editingValue=""
+      onMouseEnter={() => {}}
+      onMouseLeave={() => {}}
+      onEdit={() => {}}
+      onSaveEdit={() => {}}
+      onCancelEdit={() => {}}
+      onToggleSelection={() => {}}
+      onCopy={() => {}}
+      onDuplicate={() => {}}
+      onStartDirectDeletion={startDirectDeletion}
+      onDropdownToggle={() => {}}
+      onDropdownClose={() => {}}
+      onDeletePanelClose={() => {}}
+      onBulkDelete={() => {}}
+      onSelectAll={() => {}}
+      onDeselectAll={() => {}}
+      selectedVariables={new Set()}
+      currentVariables={[]}
+      startEditing={() => {}}
+      duplicateVariable={() => {}}
+      startDirectDeletion={startDirectDeletion}
+      cancelSelectionMode={() => {}}
+      toggleVariableSelection={() => {}}
+      handleBulkDelete={() => {}}
+      deleteControlsPosition={{ name: null, show: false }}
+    />
+  );
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  expect(startDirectDeletion).toHaveBeenCalledWith('x');
 });
