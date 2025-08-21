@@ -138,3 +138,47 @@ test('llama a startDirectDeletion al hacer clic en Eliminar', () => {
   fireEvent.click(screen.getByText(/Eliminar/i));
   expect(startDirectDeletion).toHaveBeenCalledWith('x');
 });
+
+test('permite limpiar la búsqueda de variables', () => {
+  render(
+    <Variables
+      variables={{ x: 10, y: 20 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  const searchInput = screen.getByPlaceholderText(/Buscar variable por nombre/i);
+  fireEvent.change(searchInput, { target: { value: 'y' } });
+  expect(screen.getByText(/y = 20/i)).toBeInTheDocument();
+  // Limpia la búsqueda
+  fireEvent.click(screen.getByTitle(/Limpiar búsqueda/i));
+  expect(screen.getByText(/x = 10/i)).toBeInTheDocument();
+  expect(screen.getByText(/y = 20/i)).toBeInTheDocument();
+});
+
+test('permite navegar entre páginas de variables', () => {
+  const variables = {};
+  for (let i = 1; i <= 12; i++) {
+    variables[`var${i}`] = i;
+  }
+  render(
+    <Variables
+      variables={variables}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  // Debe mostrar la variable de la segunda página después de hacer clic en "Siguiente"
+  fireEvent.click(screen.getByText(/Siguiente/i));
+  expect(screen.getByText(/var12 = 12/i)).toBeInTheDocument();
+});
