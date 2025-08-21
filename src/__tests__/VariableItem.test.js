@@ -225,3 +225,128 @@ test('permite seleccionar y deseleccionar la variable en modo selección', () =>
   fireEvent.click(checkbox);
   expect(onToggleSelection).toHaveBeenCalled();
 });
+
+test('llama a onDropdownToggle al hacer clic en el botón de más opciones', () => {
+  const onDropdownToggle = jest.fn();
+  render(
+    <VariableItem
+      name="x"
+      value={10}
+      hoveredItem="x"
+      showDropdown={null}
+      isSelectionMode={false}
+      editingName={null}
+      editingValue=""
+      onDropdownToggle={onDropdownToggle}
+      onMouseEnter={() => {}}
+      onMouseLeave={() => {}}
+      onEdit={() => {}}
+      onSaveEdit={() => {}}
+      onCancelEdit={() => {}}
+      onToggleSelection={() => {}}
+      onCopy={() => {}}
+      onDuplicate={() => {}}
+      onStartDirectDeletion={() => {}}
+      onDropdownClose={() => {}}
+      onDeletePanelClose={() => {}}
+      onBulkDelete={() => {}}
+      onSelectAll={() => {}}
+      onDeselectAll={() => {}}
+      selectedVariables={new Set()}
+      currentVariables={[]}
+      startEditing={() => {}}
+      duplicateVariable={() => {}}
+      startDirectDeletion={() => {}}
+      cancelSelectionMode={() => {}}
+      toggleVariableSelection={() => {}}
+      handleBulkDelete={() => {}}
+      deleteControlsPosition={{ name: null, show: false }}
+    />
+  );
+  const moreBtn = screen.getByTitle(/más opciones/i);
+  fireEvent.click(moreBtn);
+  expect(onDropdownToggle).toHaveBeenCalled();
+});
+
+test('llama a onCancelEdit al hacer clic en cancelar edición', () => {
+  const onCancelEdit = jest.fn();
+  render(
+    <VariableItem
+      name="x"
+      value={10}
+      editingName="x"
+      editingValue="10"
+      onEdit={() => {}}
+      onSaveEdit={() => {}}
+      onCancelEdit={onCancelEdit}
+      onMouseEnter={() => {}}
+      onMouseLeave={() => {}}
+      onToggleSelection={() => {}}
+      onCopy={() => {}}
+      onDuplicate={() => {}}
+      onStartDirectDeletion={() => {}}
+      onDropdownToggle={() => {}}
+      onDropdownClose={() => {}}
+      onDeletePanelClose={() => {}}
+      onBulkDelete={() => {}}
+      onSelectAll={() => {}}
+      onDeselectAll={() => {}}
+      selectedVariables={new Set()}
+      currentVariables={[]}
+      showDropdown={null}
+      isSelectionMode={false}
+      hoveredItem={null}
+      deleteControlsPosition={{ name: null, show: false }}
+      startEditing={() => {}}
+      duplicateVariable={() => {}}
+      startDirectDeletion={() => {}}
+      cancelSelectionMode={() => {}}
+      toggleVariableSelection={() => {}}
+      handleBulkDelete={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByTitle(/Cancelar edición/i));
+  expect(onCancelEdit).toHaveBeenCalled();
+});
+
+test('llama a onDeletePanelClose al hacer clic en Cancelar en el panel de eliminación', () => {
+  const onDeletePanelClose = jest.fn();
+  render(
+    <VariableItem
+      name="x"
+      value={10}
+      isSelectionMode={true}
+      isSelected={true}
+      selectedVariables={new Set(['x'])}
+      currentVariables={[['x', 10]]}
+      deleteControlsPosition={{ name: 'x', show: true }}
+      onDeletePanelClose={onDeletePanelClose}
+      onBulkDelete={() => {}}
+      onSelectAll={() => {}}
+      onDeselectAll={() => {}}
+      onMouseEnter={() => {}}
+      onMouseLeave={() => {}}
+      onEdit={() => {}}
+      onSaveEdit={() => {}}
+      onCancelEdit={() => {}}
+      onToggleSelection={() => {}}
+      onCopy={() => {}}
+      onDuplicate={() => {}}
+      onStartDirectDeletion={() => {}}
+      onDropdownToggle={() => {}}
+      onDropdownClose={() => {}}
+      startEditing={() => {}}
+      duplicateVariable={() => {}}
+      startDirectDeletion={() => {}}
+      cancelSelectionMode={() => {}}
+      toggleVariableSelection={() => {}}
+      handleBulkDelete={() => {}}
+      editingName={null}
+      editingValue=""
+      hoveredItem={null}
+      showDropdown={null}
+    />
+  );
+  fireEvent.click(screen.getByTitle(/Cancelar selección/i));
+  expect(onDeletePanelClose).toHaveBeenCalled();
+});
