@@ -12,3 +12,48 @@ test('muestra "Copiado" al hacer clic en el botón de copiar', () => {
   fireEvent.click(copyBtn);
   expect(screen.getByText(/Copiado/)).toBeInTheDocument();
 });
+
+test('permite editar el valor de la variable', () => {
+  const onEdit = jest.fn();
+  const onSaveEdit = jest.fn();
+  render(
+    <VariableItem
+      name="x"
+      value={10}
+      editingName="x"
+      editingValue="10"
+      onEdit={onEdit}
+      onSaveEdit={onSaveEdit}
+      onCancelEdit={() => {}}
+      onMouseEnter={() => {}}
+      onMouseLeave={() => {}}
+      onToggleSelection={() => {}}
+      onCopy={() => {}}
+      onDuplicate={() => {}}
+      onStartDirectDeletion={() => {}}
+      onDropdownToggle={() => {}}
+      onDropdownClose={() => {}}
+      onDeletePanelClose={() => {}}
+      onBulkDelete={() => {}}
+      onSelectAll={() => {}}
+      onDeselectAll={() => {}}
+      selectedVariables={new Set()}
+      currentVariables={[]}
+      showDropdown={null}
+      isSelectionMode={false}
+      hoveredItem={null}
+      deleteControlsPosition={{ name: null, show: false }}
+      startEditing={() => {}}
+      duplicateVariable={() => {}}
+      startDirectDeletion={() => {}}
+      cancelSelectionMode={() => {}}
+      toggleVariableSelection={() => {}}
+      handleBulkDelete={() => {}}
+    />
+  );
+  const input = screen.getByDisplayValue('10');
+  fireEvent.change(input, { target: { value: '20' } });
+  expect(onEdit).toHaveBeenCalled();
+  fireEvent.click(screen.getByTitle(/Guardar cambios/i));
+  expect(onSaveEdit).toHaveBeenCalledWith('x');
+});
