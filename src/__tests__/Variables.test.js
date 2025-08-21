@@ -212,3 +212,69 @@ test('permite eliminar variables seleccionadas en modo múltiple', () => {
   expect(removeVariable).toHaveBeenCalledWith('x');
   expect(removeVariable).toHaveBeenCalledWith('y');
 });
+
+test('permite duplicar una variable desde el menú contextual', () => {
+  const editVariable = jest.fn();
+
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={editVariable}
+    />
+  );
+
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Duplicar/i));
+
+  // Espera que se haya llamado editVariable con el nombre duplicado y el valor original
+  expect(editVariable).toHaveBeenCalledWith('x_copia', 10);
+});
+
+test('muestra mensaje si la búsqueda no encuentra variables', () => {
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  const searchInput = screen.getByPlaceholderText(/Buscar variable por nombre/i);
+  fireEvent.change(searchInput, { target: { value: 'z' } });
+  expect(screen.getByText(/No se encontraron variables/i)).toBeInTheDocument();
+});
+
+test('llama a navigator.clipboard.writeText al copiar variable', () => {
+  const writeText = jest.fn(() => Promise.resolve());
+  Object.assign(navigator, {
+    clipboard: { writeText }
+  });
+
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Copiar variable/i));
+  expect(writeText).toHaveBeenCalledWith('x');
+});
