@@ -182,3 +182,33 @@ test('permite navegar entre páginas de variables', () => {
   fireEvent.click(screen.getByText(/Siguiente/i));
   expect(screen.getByText(/var12 = 12/i)).toBeInTheDocument();
 });
+
+test('permite eliminar variables seleccionadas en modo múltiple', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => true); // Simula confirmación
+
+  // Crea varias variables
+  const variables = { x: 10, y: 20 };
+  render(
+    <Variables
+      variables={variables}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+
+  // Simula activar modo selección y seleccionar ambas variables
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i)); // Activa modo selección
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  fireEvent.click(screen.getByText(/Eliminar \(2\)/i)); // Elimina seleccionadas
+
+  expect(removeVariable).toHaveBeenCalledWith('x');
+  expect(removeVariable).toHaveBeenCalledWith('y');
+});
