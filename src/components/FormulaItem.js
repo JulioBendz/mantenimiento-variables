@@ -212,8 +212,7 @@ function FormulaItem({
               </button>
               <button
                 onClick={handleBulkDelete}
-                disabled={selectedFormulas.size === 0}
-                className="px-3 py-1 text-xs bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded transition duration-200 flex items-center gap-1"
+                className="px-3 py-1 text-xs bg-red-600 text-white hover:bg-red-700 rounded transition duration-200 flex items-center gap-1"
                 title={`Eliminar ${selectedFormulas.size} fórmula${selectedFormulas.size > 1 ? 's' : ''} seleccionada${selectedFormulas.size > 1 ? 's' : ''}`}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
