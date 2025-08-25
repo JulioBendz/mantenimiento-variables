@@ -7,7 +7,8 @@ function Calculator({
   setFormulaName,
   calculateFormula, 
   result, 
-  variables 
+  variables,
+  error
 }) {
   const insertSymbol = (symbol) => {
     // Inserta el símbolo en la posición actual del cursor
@@ -95,6 +96,13 @@ function Calculator({
           <div className="text-2xl font-bold text-blue-600">
             {result}
           </div>
+        </div>
+      )}
+
+      {/* Mensaje de error */}
+      {error && (
+        <div className="mt-4 p-4 bg-red-100 rounded-lg" role="alert">
+          <span className="text-red-700 font-semibold">{error}</span>
         </div>
       )}
 
