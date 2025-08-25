@@ -87,6 +87,14 @@ function Calculator({
         Calcular y Guardar
       </button>
 
+      <button
+        onClick={() => setFormula('')}
+        type="button"
+        className="w-full mt-2 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200"
+      >
+        Limpiar
+      </button>
+
       {/* Resultado */}
       {result !== null && (
         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
