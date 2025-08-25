@@ -51,3 +51,20 @@ test('muestra mensaje si no hay fórmulas calculadas', () => {
   );
   expect(screen.getByText(/No hay fórmulas calculadas/i)).toBeInTheDocument();
 });
+
+test('muestra mensaje si la búsqueda no encuentra fórmulas', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }
+      ]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.change(screen.getByPlaceholderText(/Buscar fórmula/i), { target: { value: 'noexiste' } });
+  expect(screen.getByText(/No se encontraron fórmulas/i)).toBeInTheDocument();
+});
