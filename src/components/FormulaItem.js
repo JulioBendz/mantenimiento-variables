@@ -74,6 +74,7 @@ function FormulaItem({
                   <button
                     onClick={cancelEdit}
                     className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                    title="Cancelar edición"
                   >
                     ✕
                   </button>
