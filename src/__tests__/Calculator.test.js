@@ -164,3 +164,28 @@ test('limpia el input al hacer clic en Limpiar', () => {
   fireEvent.click(screen.getByText(/Limpiar/i));
   expect(input.value).toBe('');
 });
+
+test('inserta un símbolo en la posición del cursor en el textarea', () => {
+  function Wrapper() {
+    const [formula, setFormula] = React.useState('x');
+    return (
+      <Calculator
+        formula={formula}
+        setFormula={setFormula}
+        formulaName=""
+        setFormulaName={() => {}}
+        calculateFormula={() => {}}
+        result={null}
+        variables={{ x: 1 }}
+      />
+    );
+  }
+
+  render(<Wrapper />);
+  const textarea = screen.getByPlaceholderText(/x \+ y/i);
+  // Coloca el cursor al final
+  textarea.setSelectionRange(1, 1);
+  // Click en el botón "+"
+  fireEvent.click(screen.getByTitle(/Insertar "\+"/i));
+  expect(textarea.value).toBe('x+');
+});
