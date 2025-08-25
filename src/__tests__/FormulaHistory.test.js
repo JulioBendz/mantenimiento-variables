@@ -1,5 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
 import FormulaHistory from '../components/FormulaHistory';
+import { render, screen, fireEvent } from '@testing-library/react';
+
+// Mock scrollIntoView para evitar error en jsdom
+window.HTMLElement.prototype.scrollIntoView = function() {};
 
 const formulas = [
   { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 },
@@ -126,4 +129,305 @@ test('permite copiar una fórmula al portapapeles', () => {
   fireEvent.click(screen.getByTitle(/Más opciones/i));
   fireEvent.click(screen.getByText(/Copiar/i));
   expect(writeText).toHaveBeenCalled();
+});
+
+test('permite editar el nombre de una fórmula', () => {
+  const editFormulaName = jest.fn();
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={editFormulaName}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Editar nombre/i));
+  const input = screen.getByDisplayValue(/Fórmula 1/i);
+  fireEvent.change(input, { target: { value: 'Nueva Fórmula' } });
+  fireEvent.click(screen.getByText('✓'));
+  expect(editFormulaName).toHaveBeenCalled();
+});
+
+test('permite cancelar la edición del nombre', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Editar nombre/i));
+  fireEvent.click(screen.getByTitle(/Cancelar edición/i));
+  expect(screen.getByText(/Fórmula 1/i)).toBeInTheDocument();
+});
+
+test('permite abrir y cerrar la edición de filtros de porcentaje', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.click(screen.getByTitle(/Editar rangos/i));
+  expect(screen.getByText(/Guardar/i)).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Cancelar/i));
+  expect(screen.getByTitle(/Editar rangos/i)).toBeInTheDocument();
+});
+
+test('permite cambiar los valores de los filtros de porcentaje', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.click(screen.getByTitle(/Editar rangos/i));
+  const inputs = screen.getAllByRole('spinbutton');
+  fireEvent.change(inputs[0], { target: { value: 80 } });
+  fireEvent.change(inputs[1], { target: { value: 60 } });
+  fireEvent.click(screen.getByText(/Guardar/i));
+  expect(screen.getAllByText(/80%/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/60%/).length).toBeGreaterThan(0);
+});
+
+test('permite limpiar la búsqueda', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={formulas}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1, y: 2 }}
+    />
+  );
+  fireEvent.change(screen.getByPlaceholderText(/Buscar fórmula/i), { target: { value: 'Fórmula 2' } });
+  fireEvent.click(screen.getByTitle(/Limpiar búsqueda/i));
+  expect(screen.getByText(/Fórmula 1/i)).toBeInTheDocument();
+  expect(screen.getByText(/Fórmula 2/i)).toBeInTheDocument();
+});
+
+test('permite seleccionar y eliminar múltiples fórmulas', async () => {
+  const removeFormula = jest.fn();
+  jest.spyOn(window, 'confirm').mockImplementation(() => true);
+
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 },
+        { id: 2, name: 'Fórmula 2', originalFormula: 'y+2', result: 4 }
+      ]}
+      removeFormula={removeFormula}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1, y: 2 }}
+    />
+  );
+  // Activa modo selección
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  // Selecciona la segunda fórmula
+  const checkboxes = screen.getAllByRole('checkbox');
+  fireEvent.click(checkboxes[1]);
+  // Elimina ambas
+  const eliminarBtn = await screen.findByText(/Eliminar \(2\)/i);
+  fireEvent.click(eliminarBtn);
+  await new Promise(r => setTimeout(r, 0));
+  expect(removeFormula).toHaveBeenCalledWith(1);
+  expect(removeFormula).toHaveBeenCalledWith(2);
+  window.confirm.mockRestore();
+});
+
+test('permite cambiar de página en la paginación', () => {
+  const manyFormulas = Array.from({ length: 8 }, (_, i) => ({
+    id: i + 1,
+    name: `Fórmula ${i + 1}`,
+    originalFormula: `x+${i + 1}`,
+    result: i + 1
+  }));
+  render(
+    <FormulaHistory
+      savedFormulas={manyFormulas}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1 }}
+    />
+  );
+  // Debe mostrar paginación
+  expect(screen.getByText(/Página 1 de 2/i)).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Siguiente/i));
+  expect(screen.getByText(/Página 2 de 2/i)).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Anterior/i));
+  expect(screen.getByText(/Página 1 de 2/i)).toBeInTheDocument();
+});
+
+test('restaura los filtros de porcentaje desde localStorage', () => {
+  localStorage.setItem('excellentMin', '77');
+  localStorage.setItem('acceptableMin', '55');
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  expect(screen.getAllByText(/77%/).length).toBeGreaterThan(0);
+  expect(screen.getAllByText(/55%/).length).toBeGreaterThan(0);
+  localStorage.removeItem('excellentMin');
+  localStorage.removeItem('acceptableMin');
+});
+
+test('usa fallback para copiar al portapapeles si navigator.clipboard no existe', () => {
+  const originalClipboard = navigator.clipboard;
+  delete navigator.clipboard;
+  document.execCommand = jest.fn();
+  window.alert = jest.fn();
+
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  // Selecciona el nombre exacto de la fórmula para evitar ambigüedad
+  fireEvent.mouseOver(screen.getByText(/^Fórmula$/));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Copiar/i));
+  expect(document.execCommand).toHaveBeenCalledWith('copy');
+  navigator.clipboard = originalClipboard;
+});
+
+test('permite cancelar la selección múltiple', async () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }
+      ]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  fireEvent.click(screen.getByText(/Cancelar/i));
+  expect(screen.getByText(/Fórmula 1/i)).toBeInTheDocument();
+});
+
+test('permite seleccionar y deseleccionar todas las fórmulas', async () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 },
+        { id: 2, name: 'Fórmula 2', originalFormula: 'y+2', result: 4 }
+      ]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1, y: 2 }}
+    />
+  );
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  // Seleccionar todo
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  // Deseleccionar todo
+  fireEvent.click(screen.getByText(/Deseleccionar/i));
+  expect(screen.getByText(/Seleccionar todo/i)).toBeInTheDocument();
+});
+
+test('getUsedVariables retorna "Ninguna" si variables es inválido', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={null}
+    />
+  );
+  expect(screen.getByText(/Ninguna/i)).toBeInTheDocument();
+});
+
+test('muestra alerta si intenta eliminar sin selección', async () => {
+  window.alert = jest.fn();
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 },
+        { id: 2, name: 'Fórmula 2', originalFormula: 'y+2', result: 4 }
+      ]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1, y: 2 }}
+    />
+  );
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  // Selecciona todo y luego deselecciona para asegurar el flujo
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  fireEvent.click(screen.getByText(/Deseleccionar/i));
+  fireEvent.click(screen.getByText(/Eliminar \(0\)/i));
+  // Espera a que el alert pueda ser llamado (por si hay setTimeout)
+  await new Promise(r => setTimeout(r, 0));
+  expect(window.alert).toHaveBeenCalledWith('No hay fórmulas seleccionadas para eliminar.');
+});
+
+test('getUsedVariables retorna error si ocurre excepción', () => {
+  const variables = {};
+  Object.defineProperty(variables, 'x', {
+    get() { throw new Error('fail'); }
+  });
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={variables}
+    />
+  );
+
+  // Busca el fragmento en cualquier parte del DOM
+  const found = Array.from(document.querySelectorAll('*'))
+    .some(el => el.textContent && el.textContent.includes('Error al determinar'));
+  expect(found).toBe(true);
 });
