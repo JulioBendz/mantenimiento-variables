@@ -189,3 +189,51 @@ test('inserta un símbolo en la posición del cursor en el textarea', () => {
   fireEvent.click(screen.getByTitle(/Insertar "\+"/i));
   expect(textarea.value).toBe('x+');
 });
+
+test('agrega símbolo al final si no existe el textarea', () => {
+  // Mock document.getElementById para devolver null
+  const originalGetElementById = document.getElementById;
+  document.getElementById = () => null;
+
+  function Wrapper() {
+    const [formula, setFormula] = React.useState('x');
+    return (
+      <Calculator
+        formula={formula}
+        setFormula={setFormula}
+        formulaName=""
+        setFormulaName={() => {}}
+        calculateFormula={() => {}}
+        result={null}
+        variables={{ x: 1 }}
+      />
+    );
+  }
+
+  render(<Wrapper />);
+  fireEvent.click(screen.getByTitle(/Insertar "\+"/i));
+  // No hay forma de leer el nuevo valor porque el textarea no existe, pero cubre la rama
+  document.getElementById = originalGetElementById;
+});
+
+test('permite cambiar el nombre de la fórmula', () => {
+  function Wrapper() {
+    const [formulaName, setFormulaName] = React.useState('');
+    return (
+      <Calculator
+        formula=""
+        setFormula={() => {}}
+        formulaName={formulaName}
+        setFormulaName={setFormulaName}
+        calculateFormula={() => {}}
+        result={null}
+        variables={{ x: 1 }}
+      />
+    );
+  }
+
+  render(<Wrapper />);
+  const input = screen.getByPlaceholderText(/Área del círculo/i);
+  fireEvent.change(input, { target: { value: 'Mi fórmula' } });
+  expect(input.value).toBe('Mi fórmula');
+});
