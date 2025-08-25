@@ -37,3 +37,17 @@ test('permite buscar una fórmula', () => {
   expect(screen.getByText(/Fórmula 2/i)).toBeInTheDocument();
   expect(screen.queryByText(/Fórmula 1/i)).not.toBeInTheDocument();
 });
+
+test('muestra mensaje si no hay fórmulas calculadas', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{}}
+    />
+  );
+  expect(screen.getByText(/No hay fórmulas calculadas/i)).toBeInTheDocument();
+});
