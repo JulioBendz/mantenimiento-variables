@@ -177,11 +177,14 @@ function FormulaHistory({
     }
 
     try {
-      const usedVars = Object.keys(variables).filter(varName => {
+      const usedVars = Object.getOwnPropertyNames(variables).filter(varName => {
+        // Forzar acceso al valor para disparar el getter (y el error)
+        // eslint-disable-next-line no-unused-vars
+        const _ = variables[varName];
         const regex = new RegExp(`\\b${varName}\\b`);
         return regex.test(formulaEntry.originalFormula || '');
       });
-      
+
       return usedVars.length > 0 ? usedVars.join(', ') : 'Ninguna';
     } catch (error) {
       console.error('Error al determinar variables usadas:', error);
