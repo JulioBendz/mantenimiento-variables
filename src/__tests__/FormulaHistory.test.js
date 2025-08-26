@@ -567,3 +567,41 @@ test('cierra el menú contextual aunque el usuario cancele la eliminación', asy
 
   window.confirm.mockRestore();
 });
+
+test('al eliminar una fórmula en modo selección, la remueve también de la selección', async () => {
+  const removeFormula = jest.fn();
+  jest.spyOn(window, 'confirm').mockImplementation(() => true);
+
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 },
+        { id: 2, name: 'Fórmula 2', originalFormula: 'y+2', result: 4 }
+      ]}
+      removeFormula={removeFormula}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1, y: 2 }}
+    />
+  );
+
+  // Activa modo selección (eliminar) sobre la primera fórmula
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+
+  // En este punto, la fórmula 1 está seleccionada y en modo selección
+  // Elimina la fórmula seleccionada
+  const eliminarBtn = await screen.findByText(/Eliminar \(1\)/i);
+  fireEvent.click(eliminarBtn);
+
+  // Espera a que se procese la llamada
+  await new Promise(r => setTimeout(r, 0));
+  expect(removeFormula).toHaveBeenCalledWith(1);
+
+  // El panel de selección múltiple debe cerrarse (ya no hay seleccionadas)
+  expect(screen.queryByText(/Eliminar \(1\)/i)).not.toBeInTheDocument();
+
+  window.confirm.mockRestore();
+});
