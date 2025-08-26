@@ -58,7 +58,9 @@ function PeriodSelector({
   };
 
   const handleDeletePeriod = (periodKey) => {
-    deletePeriod(periodKey);
+    if (window.confirm('¿Seguro que deseas eliminar este período?')) {
+      deletePeriod(periodKey);
+    }
   };
 
   const copyVariablesFromSpecificPeriod = (targetPeriod, sourcePeriodKey) => {
@@ -516,7 +518,7 @@ function PeriodSelector({
         </div>
       )}
 
-      {/* Estadísticas del período actual */}
+      {/* Estadísticas del período currentPeriod */}
       <div className="mt-4 p-3 bg-blue-50 rounded-lg">
         <div className="text-sm text-blue-700">
           📊 Período actual: <span className="font-bold">{periods[currentPeriod]?.name}</span>
