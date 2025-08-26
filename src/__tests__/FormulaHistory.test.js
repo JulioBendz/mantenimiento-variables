@@ -108,34 +108,38 @@ test('permite eliminar una fórmula del historial', async () => {
   window.confirm.mockRestore();
 });
 
-test('no elimina la fórmula si el usuario cancela la confirmación', async () => {
+test('no elimina la fórmula ni modifica la selección si el usuario cancela la confirmación', async () => {
   const removeFormula = jest.fn();
   jest.spyOn(window, 'confirm').mockImplementation(() => false);
 
   render(
     <FormulaHistory
       savedFormulas={[
-        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 },
+        { id: 2, name: 'Fórmula 2', originalFormula: 'y+2', result: 4 }
       ]}
       removeFormula={removeFormula}
       reuseFormula={() => {}}
       editFormulaName={() => {}}
-      currentPeriod="Periodo 1"
-      variables={{ x: 1 }}
+      currentPeriod="Periodo"
+      variables={{ x: 1, y: 2 }}
     />
   );
 
-  // Hover para mostrar el menú contextual
+  // Activa modo selección (eliminar) sobre la primera fórmula
   fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
-  // Abre el menú contextual
   fireEvent.click(screen.getByTitle(/Más opciones/i));
-  // Click en "Eliminar" del menú contextual
   fireEvent.click(screen.getByText(/^Eliminar$/i));
 
-  // Ahora aparece el panel de confirmación con el botón "Eliminar (1)"
-  // Espera a que el botón esté en el DOM
-  const eliminarConfirmBtn = await screen.findByText(/Eliminar \(1\)/i);
-  fireEvent.click(eliminarConfirmBtn);
+  // Selecciona la segunda fórmula también
+  const checkboxes = screen.getAllByRole('checkbox');
+  fireEvent.click(checkboxes[1]);
+  // Deselecciona la primera fórmula, dejando solo la segunda seleccionada
+  fireEvent.click(checkboxes[0]);
+
+  // Intenta eliminar solo la segunda fórmula
+  const eliminarBtn = await screen.findByText(/Eliminar \(1\)/i);
+  fireEvent.click(eliminarBtn);
 
   // Espera a que se procese la llamada
   await new Promise(r => setTimeout(r, 0));
