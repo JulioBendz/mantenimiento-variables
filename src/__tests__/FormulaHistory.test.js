@@ -108,6 +108,42 @@ test('permite eliminar una fórmula del historial', async () => {
   window.confirm.mockRestore();
 });
 
+test('no elimina la fórmula si el usuario cancela la confirmación', async () => {
+  const removeFormula = jest.fn();
+  jest.spyOn(window, 'confirm').mockImplementation(() => false);
+
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }
+      ]}
+      removeFormula={removeFormula}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo 1"
+      variables={{ x: 1 }}
+    />
+  );
+
+  // Hover para mostrar el menú contextual
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  // Abre el menú contextual
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  // Click en "Eliminar" del menú contextual
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+
+  // Ahora aparece el panel de confirmación con el botón "Eliminar (1)"
+  // Espera a que el botón esté en el DOM
+  const eliminarConfirmBtn = await screen.findByText(/Eliminar \(1\)/i);
+  fireEvent.click(eliminarConfirmBtn);
+
+  // Espera a que se procese la llamada
+  await new Promise(r => setTimeout(r, 0));
+  expect(removeFormula).not.toHaveBeenCalled();
+
+  window.confirm.mockRestore();
+});
+
 test('permite copiar una fórmula al portapapeles', () => {
   const writeText = jest.fn(() => Promise.resolve());
   Object.assign(navigator, { clipboard: { writeText } });
@@ -430,4 +466,19 @@ test('getUsedVariables retorna error si ocurre excepción', () => {
   const found = Array.from(document.querySelectorAll('*'))
     .some(el => el.textContent && el.textContent.includes('Error al determinar'));
   expect(found).toBe(true);
+});
+
+test('no muestra análisis de porcentajes si no hay fórmulas válidas', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{}}
+    />
+  );
+  // No debe aparecer el texto de análisis de porcentajes
+  expect(screen.queryByText(/Análisis de porcentajes/i)).not.toBeInTheDocument();
 });
