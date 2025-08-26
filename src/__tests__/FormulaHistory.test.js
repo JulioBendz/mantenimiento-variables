@@ -526,3 +526,41 @@ test('elimina una fórmula individual y la remueve de la selección si está en 
 
   window.confirm.mockRestore();
 });
+
+test('cierra el menú contextual aunque el usuario cancele la eliminación', async () => {
+  const removeFormula = jest.fn();
+  jest.spyOn(window, 'confirm').mockImplementation(() => false);
+
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }
+      ]}
+      removeFormula={removeFormula}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+
+  // Hover para mostrar el menú contextual
+  fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
+  // Abre el menú contextual
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  // Click en "Eliminar" del menú contextual
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+
+  // Click en el botón de eliminar del panel de confirmación (esto dispara window.confirm)
+  const eliminarConfirmBtn = await screen.findByText(/Eliminar \(1\)/i);
+  fireEvent.click(eliminarConfirmBtn);
+
+  // Espera a que se procese la llamada
+  await new Promise(r => setTimeout(r, 0));
+  expect(removeFormula).not.toHaveBeenCalled();
+
+  // El menú contextual debe estar cerrado (por ejemplo, la opción "Copiar" ya no debe estar)
+  expect(screen.queryByText(/Copiar/i)).not.toBeInTheDocument();
+
+  window.confirm.mockRestore();
+});
