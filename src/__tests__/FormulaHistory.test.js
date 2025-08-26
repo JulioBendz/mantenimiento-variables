@@ -562,5 +562,8 @@ test('cierra el menú contextual aunque el usuario cancele la eliminación', asy
   // El menú contextual debe estar cerrado (por ejemplo, la opción "Copiar" ya no debe estar)
   expect(screen.queryByText(/Copiar/i)).not.toBeInTheDocument();
 
+  // El panel de selección múltiple sigue abierto (el botón Eliminar (1) sigue visible)
+  expect(screen.getByText(/Eliminar \(1\)/i)).toBeInTheDocument();
+
   window.confirm.mockRestore();
 });
