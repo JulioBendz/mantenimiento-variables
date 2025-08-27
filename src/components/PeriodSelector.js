@@ -25,6 +25,12 @@ function PeriodSelector({
   const [selectedSourceForFormulas, setSelectedSourceForFormulas] = useState('');
 
   const handleCreatePeriod = () => {
+    // Validación de año
+    if (newYear < 2020 || newYear > 2030) {
+      alert('El año debe estar entre 2020 y 2030');
+      return;
+    }
+
     // El nombre se asigna automáticamente basado en mes y año
     const periodName = `${getMonthName(newMonth)} ${newYear}`;
     const periodKey = `${newYear}-${newMonth.toString().padStart(2, '0')}`;
@@ -166,8 +172,9 @@ function PeriodSelector({
           {/* Información del nuevo período - SIMPLIFICADO */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Año</label>
+              <label htmlFor="newYearInput" className="block text-sm font-medium text-gray-700 mb-1">Año</label>
               <input
+                id="newYearInput"
                 type="number"
                 value={newYear}
                 onChange={(e) => setNewYear(parseInt(e.target.value))}
@@ -177,8 +184,9 @@ function PeriodSelector({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mes</label>
+              <label htmlFor="newMonthSelect" className="block text-sm font-medium text-gray-700 mb-1">Mes</label>
               <select
+                id="newMonthSelect"
                 value={newMonth}
                 onChange={(e) => setNewMonth(parseInt(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -387,10 +395,11 @@ function PeriodSelector({
             </p>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="copyVariablesSelect" className="block text-sm font-medium text-gray-700 mb-2">
                 Copiar variables desde:
               </label>
               <select
+                id="copyVariablesSelect"
                 value={selectedSourceForVariables}
                 onChange={(e) => setSelectedSourceForVariables(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -459,10 +468,11 @@ function PeriodSelector({
             </p>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="copyFormulasSelect" className="block text-sm font-medium text-gray-700 mb-2">
                 Copiar fórmulas desde:
               </label>
               <select
+                id="copyFormulasSelect"
                 value={selectedSourceForFormulas}
                 onChange={(e) => setSelectedSourceForFormulas(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
