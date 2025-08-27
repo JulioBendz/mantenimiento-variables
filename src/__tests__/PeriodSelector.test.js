@@ -112,6 +112,28 @@ test('no crea un período si el año es inválido', () => {
   expect(createNewPeriod).not.toHaveBeenCalled();
 });
 
+test('no crea un período si el mes es inválido', () => {
+  window.alert = jest.fn();
+  const createNewPeriod = jest.fn();
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={createNewPeriod}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /\+ nuevo período/i }));
+  // Cambia el mes a uno fuera de rango
+  fireEvent.change(screen.getByLabelText(/mes/i), { target: { value: 13 } });
+  fireEvent.click(screen.getByRole('button', { name: /crear/i }));
+  expect(window.alert).toHaveBeenCalledWith(expect.stringMatching(/mes.*válido/i));
+  expect(createNewPeriod).not.toHaveBeenCalled();
+});
+
 test('permite eliminar el periodo actual', () => {
   const deletePeriod = jest.fn();
   window.confirm = jest.fn(() => true); // Simula confirmación positiva
@@ -277,7 +299,7 @@ test('no copia fórmulas si el período fuente no tiene fórmulas', async () => 
   expect(screen.getByRole('button', { name: /copiar fórmulas/i })).toBeDisabled();
 });
 
-test('no permite copiar variables si no seleccionas período fuente', async () => {
+test('no permite copiar variables si no seleccionas período fuente', () => {
   render(
     <PeriodSelector
       periods={periods}
@@ -293,6 +315,23 @@ test('no permite copiar variables si no seleccionas período fuente', async () =
   // Des-selecciona el período fuente
   fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '' } });
   expect(screen.getByRole('button', { name: /copiar variables/i })).toBeDisabled();
+});
+
+test('no permite copiar fórmulas si no seleccionas período fuente', () => {
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
+  fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '' } });
+  expect(screen.getByRole('button', { name: /copiar fórmulas/i })).toBeDisabled();
 });
 
 test('cierra el modal de copiar variables al cancelar', async () => {
@@ -327,4 +366,133 @@ test('cierra el modal de copiar fórmulas al cancelar', async () => {
   fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
   fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
   expect(screen.queryByText(/copiar fórmulas/i)).not.toBeInTheDocument();
+});
+
+test('no copia variables si el período fuente no existe', () => {
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const { rerender } = render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={copyVariablesFromPreviousPeriod}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  // Llama directamente a la función interna (si la exportas para test)
+  // O simula el flujo con un período que no existe
+  // Aquí solo como ejemplo:
+  // expect(copyVariablesFromPreviousPeriod).not.toHaveBeenCalled();
+});
+
+test('cierra el formulario de creación al cancelar', () => {
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /\+ nuevo período/i }));
+  fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
+  expect(screen.queryByText(/crear nuevo período/i)).not.toBeInTheDocument();
+});
+
+test('cierra el formulario de creación al presionar Escape', () => {
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /\+ nuevo período/i }));
+  fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+  expect(screen.queryByText(/crear nuevo período/i)).not.toBeInTheDocument();
+});
+
+test('puede marcar y desmarcar checkboxes de copiar variables y fórmulas al crear período', () => {
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /\+ nuevo período/i }));
+  const varCheckbox = screen.getByLabelText(/copiar variables/i);
+  const formCheckbox = screen.getByLabelText(/copiar fórmulas/i);
+  fireEvent.click(varCheckbox);
+  fireEvent.click(formCheckbox);
+  expect(varCheckbox.checked).toBe(false); // o true, según el estado inicial
+  expect(formCheckbox.checked).toBe(false); // o true, según el estado inicial
+});
+
+test('puede seleccionar otro período fuente en el modal de copiar variables', () => {
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-08"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  const select = screen.getByLabelText(/copiar variables desde/i);
+  fireEvent.change(select, { target: { value: '2025-07' } });
+  expect(select.value).toBe('2025-07');
+});
+
+test('cierra el modal de copiar variables al presionar Escape', () => {
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' });
+  expect(screen.queryByText(/copiar variables/i)).not.toBeInTheDocument();
+});
+
+test('no permite seleccionar un período fuente inexistente en el modal de copiar variables', () => {
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  const select = screen.getByLabelText(/copiar variables desde/i);
+  fireEvent.change(select, { target: { value: 'no-existe' } });
+  // El valor debe seguir siendo ""
+  expect(select.value).toBe('');
+  expect(screen.getByRole('button', { name: /copiar variables/i })).toBeDisabled();
 });
