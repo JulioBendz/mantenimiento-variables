@@ -25,9 +25,12 @@ function PeriodSelector({
   const [selectedSourceForFormulas, setSelectedSourceForFormulas] = useState('');
 
   const handleCreatePeriod = () => {
-    // Validación de año
     if (newYear < 2020 || newYear > 2030) {
       alert('El año debe estar entre 2020 y 2030');
+      return;
+    }
+    if (newMonth < 1 || newMonth > 12) {
+      alert('El mes no es válido');
       return;
     }
 
@@ -150,6 +153,32 @@ function PeriodSelector({
     }
   }, [showFormulasModal]);
 
+  React.useEffect(() => {
+    if (!showCreateForm) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowCreateForm(false);
+        setCopyVariables(true);
+        setCopyFormulas(true);
+        setSourcePeriod('');
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showCreateForm]);
+
+  React.useEffect(() => {
+    if (!showVariablesModal) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowVariablesModal(false);
+        setSelectedSourceForVariables('');
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showVariablesModal]);
+
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -196,6 +225,7 @@ function PeriodSelector({
                     {getMonthName(i + 1)}
                   </option>
                 ))}
+                <option value="13">Mes Inválido</option> {/* Opción de mes inválido */}
               </select>
             </div>
           </div>
