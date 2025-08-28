@@ -1,5 +1,5 @@
-import FormulaHistory from '../components/FormulaHistory';
 import { render, screen, fireEvent } from '@testing-library/react';
+import FormulaHistory from '../components/FormulaHistory';
 
 // Mock scrollIntoView para evitar error en jsdom
 window.HTMLElement.prototype.scrollIntoView = function() {};
