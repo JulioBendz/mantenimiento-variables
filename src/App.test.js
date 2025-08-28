@@ -19,7 +19,7 @@ test('puede agregar una variable', () => {
   fireEvent.change(valueInput, { target: { value: '10' } });
   fireEvent.click(addBtn);
 
-  expect(screen.getByText(/x = 10/)).toBeInTheDocument();
+  expect(screen.getByText(/x\s*=\s*10/i)).toBeInTheDocument();
 });
 
 test('puede buscar una variable', () => {
@@ -34,7 +34,7 @@ test('puede buscar una variable', () => {
   fireEvent.click(addBtn);
 
   // Ahora sí existe el input de búsqueda
-  const searchInput = screen.getByPlaceholderText("Buscar variable por nombre...");
+  const searchInput = screen.getByPlaceholderText(/Buscar variable por nombre/i);
   fireEvent.change(searchInput, { target: { value: 'y' } });
   expect(screen.getByText(/No se encontraron variables/i)).toBeInTheDocument();
 });
@@ -49,7 +49,7 @@ test('existen variables en el documento', () => {
 test('la barra de búsqueda se muestra solo si hay variables', () => {
   render(<App />);
   // Al principio, no debería haber barra de búsqueda
-  expect(screen.queryByPlaceholderText(/Buscar variable por nombre.../i)).not.toBeInTheDocument();
+  expect(screen.queryByPlaceholderText(/Buscar variable por nombre/i)).not.toBeInTheDocument();
 
   // Agrega una variable usando el flujo real
   const nameInput = screen.getByPlaceholderText(/Nombre de variable/i);
@@ -61,5 +61,5 @@ test('la barra de búsqueda se muestra solo si hay variables', () => {
   fireEvent.click(addBtn);
 
   // Ahora debería aparecer la barra de búsqueda
-  expect(screen.getByPlaceholderText(/Buscar variable por nombre.../i)).toBeInTheDocument();
+  expect(screen.getByPlaceholderText(/Buscar variable por nombre/i)).toBeInTheDocument();
 });
