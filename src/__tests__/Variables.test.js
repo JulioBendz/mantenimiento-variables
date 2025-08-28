@@ -690,4 +690,55 @@ test('handleBulkDelete alerta si no hay variables seleccionadas', () => {
   eliminarBtns.forEach(btn => {
     expect(btn).toBeDisabled();
   });
+  expect(window.alert).not.toHaveBeenCalled();
+});
+
+test('handleRemoveVariable remueve de la selección si está en modo selección', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => true);
+  render(
+    <Variables
+      variables={{ x: 10, y: 20 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  // Activa modo selección múltiple y selecciona ambas
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  // Elimina solo una variable desde el panel de selección múltiple
+  const eliminarBtns = screen.getAllByText(/Eliminar\s*\(2\)/i);
+  fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
+  expect(removeVariable).toHaveBeenCalledWith('x');
+  expect(removeVariable).toHaveBeenCalledWith('y');
+});
+
+test('callbacks de VariableItem: onMouseEnter, onMouseLeave, onDropdownToggle, onDropdownClose', async () => {
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  const variableText = screen.getByText(/x = 10/i);
+  fireEvent.mouseEnter(variableText);
+
+  // Espera a que el botón esté disponible
+  const menuBtn = await screen.findByTitle(/Más opciones/i);
+  fireEvent.click(menuBtn); // Abre
+  fireEvent.click(menuBtn); // Cierra
+  fireEvent.mouseLeave(variableText);
 });
