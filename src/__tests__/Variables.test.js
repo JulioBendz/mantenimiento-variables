@@ -292,6 +292,7 @@ test('llama a navigator.clipboard.writeText al copiar variable', () => {
       removeVariable={() => {}}
       editVariable={() => {}}
     />
+
   );
 
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
@@ -614,7 +615,7 @@ test('calcula altura dinámica correctamente cuando no hay variables', () => {
   expect(screen.getByText(/No hay variables definidas/i)).toBeInTheDocument();
 });
 
-test('muestra feedback visual al copiar variable', () => {
+test('feedback visual al copiar variable (DOM manipulación)', () => {
   Object.assign(navigator, {
     clipboard: { writeText: jest.fn(() => Promise.resolve()) }
   });
