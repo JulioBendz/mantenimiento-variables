@@ -1,6 +1,6 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import Variables from '../components/Variables';
-import React from 'react';
 import VariableItem from '../components/VariableItem';
 
 test('muestra el título de variables', () => {
@@ -19,19 +19,27 @@ test('muestra el título de variables', () => {
 
 test('permite agregar una variable', () => {
   const addVariable = jest.fn();
-  render(
-    <Variables
-      variables={{}}
-      addVariable={addVariable}
-      setVariableName={() => {}}
-      setVariableValue={() => {}}
-      variableName="x"
-      variableValue="10"
-      removeVariable={() => {}}
-      editVariable={() => {}}
-    />
-  );
+  function Wrapper() {
+    const [variableName, setVariableName] = React.useState('');
+    const [variableValue, setVariableValue] = React.useState('');
+    return (
+      <Variables
+        variables={{}}
+        addVariable={addVariable}
+        setVariableName={setVariableName}
+        setVariableValue={setVariableValue}
+        variableName={variableName}
+        variableValue={variableValue}
+        removeVariable={() => {}}
+        editVariable={() => {}}
+      />
+    );
+  }
+  render(<Wrapper />);
+  fireEvent.change(screen.getByPlaceholderText(/Nombre de variable/i), { target: { value: 'x' } });
+  fireEvent.change(screen.getByPlaceholderText(/Valor numérico/i), { target: { value: '10' } });
   const button = screen.getByText(/Agregar Variable/i);
+  expect(button).not.toBeDisabled();
   fireEvent.click(button);
   expect(addVariable).toHaveBeenCalled();
 });
