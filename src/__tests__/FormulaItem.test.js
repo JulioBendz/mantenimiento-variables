@@ -100,7 +100,8 @@ test('no elimina variable si el usuario cancela la confirmación', () => {
   fireEvent.click(screen.getByTitle(/Más opciones/i));
   fireEvent.click(screen.getByText(/Eliminar/i));
   // El panel de selección múltiple aparece, simula eliminar
-  fireEvent.click(screen.getByText(/Eliminar \(1\)/i));
+  const eliminarBtns = screen.getAllByText(/Eliminar\s*\(1\)/i);
+  fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
   expect(removeVariable).not.toHaveBeenCalled();
 });
 
@@ -123,11 +124,10 @@ test('no elimina variables si ninguna está seleccionada en modo múltiple', () 
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
   fireEvent.click(screen.getByTitle(/Más opciones/i));
   fireEvent.click(screen.getByText(/Eliminar/i));
-  // Busca el botón de eliminar y verifica que está deshabilitado o no existe
-  const eliminarBtns = screen.queryAllByRole('button', { name: /eliminar/i });
-  // Busca el que tenga el texto "Eliminar (0)" o similar
-  const eliminarCero = eliminarBtns.find(btn => btn.textContent.match(/Eliminar\s*\(0\)/i));
-  expect(eliminarCero).toBeUndefined();
+  // Deselecciona la variable seleccionada
+  fireEvent.click(screen.getByText(/x = 10/i));
+  // El botón Eliminar (0) no debe estar en el DOM
+  expect(screen.queryByText(/Eliminar\s*\(0\)/i)).not.toBeInTheDocument();
   expect(removeVariable).not.toHaveBeenCalled();
 });
 
