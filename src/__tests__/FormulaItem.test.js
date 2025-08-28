@@ -158,6 +158,25 @@ test('permite editar el nombre de la fórmula', () => {
   expect(cancelEdit).toHaveBeenCalled();
 });
 
+test('guarda edición al presionar Enter en el input', () => {
+  const saveEdit = jest.fn();
+  render(
+    <FormulaItem
+      formulaEntry={{ ...formulaEntry, id: 2 }}
+      editingId={2}
+      editingName="Nuevo nombre"
+      startEditing={jest.fn()}
+      saveEdit={saveEdit}
+      cancelEdit={jest.fn()}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  const input = screen.getByDisplayValue('Nuevo nombre');
+  fireEvent.keyPress(input, { key: 'Enter', code: 'Enter', charCode: 13 });
+  expect(saveEdit).toHaveBeenCalledWith(2);
+});
+
 test('muestra menú contextual y permite eliminar fórmula', () => {
   const startDirectDeletion = jest.fn();
   const setShowDropdown = jest.fn();
@@ -280,4 +299,71 @@ test('panel de controles de eliminación aparece en modo selección', () => {
   );
   expect(screen.getByText(/Modo eliminación activo/i)).toBeInTheDocument();
   expect(screen.getByText(/Eliminar \(1\)/i)).toBeInTheDocument();
+});
+
+test('llama a setHoveredItem(null) al hacer mouse leave', () => {
+  const setHoveredItem = jest.fn();
+  render(
+    <FormulaItem
+      formulaEntry={formulaEntry}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+      setHoveredItem={setHoveredItem}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/Fórmula 1/i));
+  fireEvent.mouseLeave(screen.getByText(/Fórmula 1/i));
+  expect(setHoveredItem).toHaveBeenCalledWith(null);
+});
+
+test('llama a reuseFormulaWithOptions al hacer click en "Usar nuevamente"', () => {
+  const reuseFormulaWithOptions = jest.fn();
+  const setShowDropdown = jest.fn();
+  render(
+    <FormulaItem
+      formulaEntry={{ ...formulaEntry, id: 3 }}
+      hoveredItem={3}
+      showDropdown={3}
+      setShowDropdown={setShowDropdown}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+      reuseFormulaWithOptions={reuseFormulaWithOptions}
+    />
+  );
+  fireEvent.click(screen.getByText(/Usar nuevamente/i));
+  expect(reuseFormulaWithOptions).toHaveBeenCalledWith(expect.objectContaining({ id: 3 }));
+});
+
+test('al hacer click en el menú contextual alterna el valor de showDropdown', () => {
+  const setShowDropdown = jest.fn();
+  const utils = render(
+    <FormulaItem
+      formulaEntry={{ id: 5, name: 'Fórmula 5', originalFormula: 'x+1', result: 2 }}
+      hoveredItem={5}
+      showDropdown={null}
+      setShowDropdown={setShowDropdown}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  // Primer click: abre el menú
+  const menuButtons = screen.getAllByTitle(/Más opciones/i);
+  fireEvent.click(menuButtons[0]);
+  expect(setShowDropdown).toHaveBeenCalledWith(5);
+
+  // Simula el cambio de estado: showDropdown ahora es 5
+  setShowDropdown.mockClear();
+  utils.rerender(
+    <FormulaItem
+      formulaEntry={{ id: 5, name: 'Fórmula 5', originalFormula: 'x+1', result: 2 }}
+      hoveredItem={5}
+      showDropdown={5}
+      setShowDropdown={setShowDropdown}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  const menuButtons2 = screen.getAllByTitle(/Más opciones/i);
+  fireEvent.click(menuButtons2[0]);
+  expect(setShowDropdown).toHaveBeenCalledWith(null);
 });
