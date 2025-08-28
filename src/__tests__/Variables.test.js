@@ -163,7 +163,6 @@ test('permite limpiar la búsqueda de variables', () => {
   const searchInput = screen.getByPlaceholderText(/Buscar variable por nombre/i);
   fireEvent.change(searchInput, { target: { value: 'y' } });
   expect(screen.getByText(/y = 20/i)).toBeInTheDocument();
-  // Limpia la búsqueda
   fireEvent.click(screen.getByTitle(/Limpiar búsqueda/i));
   expect(screen.getByText(/x = 10/i)).toBeInTheDocument();
   expect(screen.getByText(/y = 20/i)).toBeInTheDocument();
@@ -186,16 +185,13 @@ test('permite navegar entre páginas de variables', () => {
       editVariable={() => {}}
     />
   );
-  // Debe mostrar la variable de la segunda página después de hacer clic en "Siguiente"
   fireEvent.click(screen.getByText(/Siguiente/i));
   expect(screen.getByText(/var12 = 12/i)).toBeInTheDocument();
 });
 
 test('permite eliminar variables seleccionadas en modo múltiple', () => {
   const removeVariable = jest.fn();
-  window.confirm = jest.fn(() => true); // Simula confirmación
-
-  // Crea varias variables
+  window.confirm = jest.fn(() => true);
   const variables = { x: 10, y: 20 };
   render(
     <Variables
@@ -209,21 +205,17 @@ test('permite eliminar variables seleccionadas en modo múltiple', () => {
       editVariable={() => {}}
     />
   );
-
-  // Simula activar modo selección y seleccionar ambas variables
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
   fireEvent.click(screen.getByTitle(/Más opciones/i));
-  fireEvent.click(screen.getByText(/Eliminar/i)); // Activa modo selección
+  fireEvent.click(screen.getByText(/Eliminar/i));
   fireEvent.click(screen.getByText(/Seleccionar todo/i));
-  fireEvent.click(screen.getByText(/Eliminar \(2\)/i)); // Elimina seleccionadas
-
+  fireEvent.click(screen.getByText(/Eliminar \(2\)/i));
   expect(removeVariable).toHaveBeenCalledWith('x');
   expect(removeVariable).toHaveBeenCalledWith('y');
 });
 
 test('permite duplicar una variable desde el menú contextual', () => {
   const editVariable = jest.fn();
-
   render(
     <Variables
       variables={{ x: 10 }}
@@ -236,12 +228,9 @@ test('permite duplicar una variable desde el menú contextual', () => {
       editVariable={editVariable}
     />
   );
-
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
   fireEvent.click(screen.getByTitle(/Más opciones/i));
   fireEvent.click(screen.getByText(/Duplicar/i));
-
-  // Espera que se haya llamado editVariable con el nombre duplicado y el valor original
   expect(editVariable).toHaveBeenCalledWith('x_copia', 10);
 });
 
