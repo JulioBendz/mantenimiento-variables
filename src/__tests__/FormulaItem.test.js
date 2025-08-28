@@ -176,3 +176,108 @@ test('muestra menú contextual y permite eliminar fórmula', () => {
   fireEvent.click(screen.getByText(/Eliminar/i));
   expect(startDirectDeletion).toHaveBeenCalledWith(3);
 });
+
+test('muestra "Fórmula sin nombre" si no hay nombre', () => {
+  render(
+    <FormulaItem
+      formulaEntry={{ ...formulaEntry, name: '' }}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  expect(screen.getByText(/Fórmula sin nombre/i)).toBeInTheDocument();
+});
+
+test('muestra "No definida" si no hay originalFormula', () => {
+  render(
+    <FormulaItem
+      formulaEntry={{ ...formulaEntry, originalFormula: '' }}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  expect(screen.getByText(/No definida/i)).toBeInTheDocument();
+});
+
+test('muestra "Pendiente de cálculo" si no hay evaluatedFormula', () => {
+  render(
+    <FormulaItem
+      formulaEntry={{ ...formulaEntry, evaluatedFormula: '' }}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  expect(screen.getByText(/Pendiente de cálculo/i)).toBeInTheDocument();
+});
+
+test('muestra "Pendiente" si el resultado es null', () => {
+  render(
+    <FormulaItem
+      formulaEntry={{ ...formulaEntry, result: null }}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  // Busca el contenedor de resultado
+  const resultadoLabel = screen.getByText(/Resultado:/i);
+  // Busca el texto "Pendiente" dentro del mismo contenedor
+  expect(resultadoLabel.parentElement).toHaveTextContent(/Pendiente/i);
+});
+
+test('muestra fecha y hora por defecto si no existen', () => {
+  render(
+    <FormulaItem
+      formulaEntry={{ ...formulaEntry, date: undefined, timestamp: undefined }}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  expect(screen.getByText(/Sin fecha/i)).toBeInTheDocument();
+  expect(screen.getByText(/Sin hora/i)).toBeInTheDocument();
+});
+
+test('muestra última actualización si existe', () => {
+  render(
+    <FormulaItem
+      formulaEntry={{ ...formulaEntry, lastRecalculated: '2025-08-28' }}
+      selectedFormulas={new Set()}
+      getUsedVariables={() => 'x'}
+    />
+  );
+  expect(screen.getByText(/Última actualización/i)).toBeInTheDocument();
+});
+
+test('checkbox aparece solo en modo selección', () => {
+  render(
+    <FormulaItem
+      formulaEntry={formulaEntry}
+      isSelectionMode={true}
+      selectedFormulas={new Set()}
+      toggleFormulaSelection={jest.fn()}
+      getUsedVariables={() => 'x'}
+      deleteControlsPosition={{ id: -1, show: false }}
+      deleteControlsRef={{ current: null }}
+    />
+  );
+  expect(screen.getByRole('checkbox')).toBeInTheDocument();
+});
+
+test('panel de controles de eliminación aparece en modo selección', () => {
+  render(
+    <FormulaItem
+      formulaEntry={formulaEntry}
+      isSelectionMode={true}
+      deleteControlsPosition={{ id: 1, show: true }}
+      deleteControlsRef={{ current: null }}
+      selectedFormulas={new Set([1])}
+      getUsedVariables={() => 'x'}
+      currentFormulas={[formulaEntry]}
+      selectAllFormulas={jest.fn()}
+      deselectAllFormulas={jest.fn()}
+      handleBulkDelete={jest.fn()}
+      cancelSelectionMode={jest.fn()}
+    />
+  );
+  expect(screen.getByText(/Modo eliminación activo/i)).toBeInTheDocument();
+  expect(screen.getByText(/Eliminar \(1\)/i)).toBeInTheDocument();
+});
