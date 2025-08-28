@@ -428,6 +428,41 @@ function Variables({
           </div>
         </div>
       )}
+
+      {/* Modo Selección - Confirmación de Eliminación */}
+      {isSelectionMode && (
+        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3 shadow-sm animate-fadeIn">
+          <p className="text-sm text-red-700">
+            Estás en modo selección. Puedes eliminar múltiples variables a la vez.
+          </p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {Array.from(selectedVariables).map(name => (
+              <span key={name} className="text-xs bg-red-100 text-red-700 rounded-full px-3 py-1">
+                {name}
+              </span>
+            ))}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 mt-3">
+            <button
+              onClick={handleBulkDelete}
+              className="px-3 py-1 text-xs bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded transition duration-200 flex items-center gap-1"
+              title={`Eliminar ${selectedVariables.size} variable${selectedVariables.size > 1 ? 's' : ''} seleccionada${selectedVariables.size > 1 ? 's' : ''}`}
+              disabled={selectedVariables.size === 0}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m6 4H9m6-8H9m9 4a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Eliminar ({selectedVariables.size})
+            </button>
+            <button
+              onClick={cancelSelectionMode}
+              className="px-3 py-1 text-xs bg-gray-300 text-gray-700 hover:bg-gray-400 rounded transition duration-200"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
