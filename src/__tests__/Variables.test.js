@@ -488,3 +488,128 @@ test('muestra nombres de variables seleccionadas en el panel de selección múlt
   const eliminarBtns = screen.getAllByText(/Eliminar\s*\(2\)/i);
   expect(eliminarBtns[eliminarBtns.length - 1].title).toMatch(/Eliminar 2 variables seleccionadas?/i);
 });
+
+test('no edita variable si el valor no es numérico', () => {
+  const editVariable = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={editVariable}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Editar valor/i));
+  const input = screen.getByDisplayValue('10');
+  fireEvent.change(input, { target: { value: 'abc' } });
+  fireEvent.click(screen.getByTitle(/Guardar cambios/i));
+  expect(editVariable).not.toHaveBeenCalled();
+});
+
+test('cancela edición de variable', () => {
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Editar valor/i));
+  fireEvent.click(screen.getByTitle(/Cancelar edición/i));
+  expect(screen.getByText(/x = 10/i)).toBeInTheDocument();
+});
+
+test('no elimina variable si usuario cancela confirmación', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => false);
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  expect(removeVariable).not.toHaveBeenCalled();
+});
+
+test('no elimina variables en bulk si usuario cancela confirmación', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => false);
+  render(
+    <Variables
+      variables={{ x: 10, y: 20 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  const eliminarBtns = screen.getAllByText(/Eliminar\s*\(2\)/i);
+  fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
+  expect(removeVariable).not.toHaveBeenCalled();
+});
+
+test('duplicateVariable agrega sufijo incremental correctamente', () => {
+  const editVariable = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10, x_copia: 10, x_copia1: 10, x_copia2: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={editVariable}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Duplicar/i));
+  expect(editVariable).toHaveBeenCalledWith('x_copia3', 10);
+});
+
+test('calcula altura dinámica correctamente cuando no hay variables', () => {
+  render(
+    <Variables
+      variables={{}}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  // No hay variables, así que el mensaje debe estar presente
+  expect(screen.getByText(/No hay variables definidas/i)).toBeInTheDocument();
+});
