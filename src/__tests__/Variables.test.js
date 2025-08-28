@@ -613,3 +613,80 @@ test('calcula altura dinámica correctamente cuando no hay variables', () => {
   // No hay variables, así que el mensaje debe estar presente
   expect(screen.getByText(/No hay variables definidas/i)).toBeInTheDocument();
 });
+
+test('muestra feedback visual al copiar variable', () => {
+  Object.assign(navigator, {
+    clipboard: { writeText: jest.fn(() => Promise.resolve()) }
+  });
+
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  const copyBtn = screen.getByTitle(/Copiar variable "x" al portapapeles/i);
+  expect(copyBtn).toBeInTheDocument();
+  fireEvent.click(copyBtn);
+});
+
+test('toggleVariableSelection agrega y quita variables de la selección', () => {
+  render(
+    <Variables
+      variables={{ x: 10, y: 20 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  // Activa modo selección
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  // Ahora debería estar seleccionada
+  expect(screen.getByText(/Deseleccionar/i)).toBeInTheDocument();
+  fireEvent.click(screen.getByText(/Deseleccionar/i));
+  // Y debería volver a modo normal
+  expect(screen.getByText(/Seleccionar todo/i)).toBeInTheDocument();
+});
+
+test('handleBulkDelete alerta si no hay variables seleccionadas', () => {
+  window.alert = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10, y: 20 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  // Activa modo selección múltiple
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  // Selecciona todo y luego deselecciona todo para dejar la selección vacía
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  fireEvent.click(screen.getByText(/Deseleccionar/i));
+  // Todos los botones "Eliminar (0)" deben estar deshabilitados
+  const eliminarBtns = screen.queryAllByText(/Eliminar\s*\(0\)/i);
+  expect(eliminarBtns.length).toBeGreaterThan(0);
+  eliminarBtns.forEach(btn => {
+    expect(btn).toBeDisabled();
+  });
+});
