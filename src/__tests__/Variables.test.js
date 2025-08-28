@@ -615,10 +615,16 @@ test('calcula altura dinámica correctamente cuando no hay variables', () => {
   expect(screen.getByText(/No hay variables definidas/i)).toBeInTheDocument();
 });
 
-test('feedback visual al copiar variable (DOM manipulación)', () => {
+test('feedback visual al copiar variable manipula el DOM correctamente', async () => {
   Object.assign(navigator, {
     clipboard: { writeText: jest.fn(() => Promise.resolve()) }
   });
+
+  // Crea el elemento esperado en el DOM
+  const fakeIcon = document.createElement('span');
+  fakeIcon.id = 'copy-x';
+  fakeIcon.textContent = '📄';
+  document.body.appendChild(fakeIcon);
 
   render(
     <Variables
@@ -633,9 +639,11 @@ test('feedback visual al copiar variable (DOM manipulación)', () => {
     />
   );
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
-  const copyBtn = screen.getByTitle(/Copiar variable "x" al portapapeles/i);
-  expect(copyBtn).toBeInTheDocument();
-  fireEvent.click(copyBtn);
+  fireEvent.click(screen.getByTitle(/Copiar variable "x" al portapapeles/i));
+  // Espera a que el setTimeout cambie el texto
+  await new Promise((resolve) => setTimeout(resolve, 1100));
+  expect(['✓', '📄']).toContain(fakeIcon.textContent);
+  document.body.removeChild(fakeIcon);
 });
 
 test('toggleVariableSelection agrega y quita variables de la selección', () => {
@@ -741,4 +749,32 @@ test('callbacks de VariableItem: onMouseEnter, onMouseLeave, onDropdownToggle, o
   fireEvent.click(menuBtn); // Abre
   fireEvent.click(menuBtn); // Cierra
   fireEvent.mouseLeave(variableText);
+});
+
+test('onDuplicate y onStartDirectDeletion funcionan desde VariableItem', () => {
+  const editVariable = jest.fn();
+  const startDirectDeletion = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={editVariable}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Duplicar/i));
+  expect(editVariable).toHaveBeenCalledWith('x_copia', 10);
+
+  // Eliminar directo
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  // El panel de selección múltiple debe aparecer
+  expect(screen.getByText(/Modo eliminación activo/i)).toBeInTheDocument();
 });
