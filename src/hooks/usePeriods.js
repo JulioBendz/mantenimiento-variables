@@ -411,7 +411,7 @@ export function usePeriods() {
   };
 
   const reuseFormula = (formulaEntry) => {
-    if (!formulaEntry) return; // <-- Validación para evitar error si es undefined
+    if (!formulaEntry) return;
     setFormula(formulaEntry.originalFormula);
     setFormulaName(formulaEntry.name + ' (copia)');
   };
@@ -489,6 +489,9 @@ export function usePeriods() {
     calculateFormula,
     removeFormula,
     reuseFormula,
-    editFormulaName
+    editFormulaName,
+    // Agrega estas dos líneas para testear directamente:
+    recalculateAllFormulas,
+    recalculateFormulasForVariable
   };
 }
