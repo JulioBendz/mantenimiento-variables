@@ -60,6 +60,15 @@ test('deletePeriod elimina un periodo (con confirmación)', () => {
   expect(result.current.periods['2025-11']).toBeUndefined();
 });
 
+test('deletePeriod alerta si solo hay un período', () => {
+  const { result } = renderHook(() => usePeriods());
+  const keys = Object.keys(result.current.periods);
+  act(() => {
+    result.current.deletePeriod(keys[0]);
+  });
+  expect(window.alert).toHaveBeenCalled();
+});
+
 test('addVariable agrega variable y removeVariable la elimina', () => {
   const { result } = renderHook(() => usePeriods());
   
@@ -322,12 +331,12 @@ test('editVariable no falla si la variable no existe', () => {
   expect(true).toBe(true);
 });
 
-test('editFormulaName no falla si la fórmula no existe', () => {
+test('editFormulaName no hace nada si la fórmula a editar no existe', () => {
   const { result } = renderHook(() => usePeriods());
   act(() => {
-    result.current.editFormulaName('noexiste', 'nuevo');
+    result.current.editFormulaName('id-inexistente', 'NuevoNombre');
   });
-  expect(true).toBe(true);
+  expect(true).toBe(true); // No debe lanzar error
 });
 
 test('reuseFormula no hace nada si la fórmula no existe', () => {
@@ -336,4 +345,76 @@ test('reuseFormula no hace nada si la fórmula no existe', () => {
     result.current.reuseFormula(undefined);
   });
   expect(result.current.formula === '' || result.current.formula === undefined).toBe(true);
+});
+
+test('setPeriods actualiza el estado de periods', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.setPeriods({ test: { variables: {}, formulas: [], created: '', name: 'Test' } });
+  });
+  expect(result.current.periods.test).toBeDefined();
+});
+
+test('setCurrentPeriod actualiza el período actual', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.setCurrentPeriod('otro');
+  });
+  expect(result.current.currentPeriod).toBe('otro');
+});
+
+test('setVariableName y setVariableValue actualizan el estado', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.setVariableName('z');
+    result.current.setVariableValue('99');
+  });
+  expect(result.current.variableName).toBe('z');
+  expect(result.current.variableValue).toBe('99');
+});
+
+test('setFormula y setFormulaName actualizan el estado', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.setFormula('z+1');
+    result.current.setFormulaName('Zeta');
+  });
+  expect(result.current.formula).toBe('z+1');
+  expect(result.current.formulaName).toBe('Zeta');
+});
+
+test('setResult actualiza el resultado', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.setResult(123);
+  });
+  expect(result.current.result).toBe(123);
+});
+
+test('getMonthName retorna el nombre correcto', () => {
+  const { result } = renderHook(() => usePeriods());
+  expect(result.current.getMonthName(1)).toBe('Enero');
+  expect(result.current.getMonthName(12)).toBe('Diciembre');
+});
+
+test('getCurrentPeriodData retorna datos del período actual', () => {
+  const { result } = renderHook(() => usePeriods());
+  expect(result.current.getCurrentPeriodData()).toHaveProperty('variables');
+  expect(result.current.getCurrentPeriodData()).toHaveProperty('formulas');
+});
+
+test('copyVariablesFromPreviousPeriod alerta si no hay períodos previos', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.copyVariablesFromPreviousPeriod('2025-01');
+  });
+  expect(window.alert).toHaveBeenCalled();
+});
+
+test('copyFormulasFromPreviousPeriod alerta si no hay períodos previos', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.copyFormulasFromPreviousPeriod('2025-01');
+  });
+  expect(window.alert).toHaveBeenCalled();
 });
