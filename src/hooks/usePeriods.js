@@ -339,6 +339,7 @@ export function usePeriods() {
   // Calcular y guardar fórmula desde el calculador
   const calculateFormula = () => {
     try {
+      if (!formula || !formulaName) return; // <-- Validación para evitar agregar fórmulas vacías
       const currentData = getCurrentPeriodData();
       // Limpia la fórmula antes de evaluar y guardar
       const cleanFormula = formula.replace(/\r?\n|\r/g, ' ').trim();
@@ -410,6 +411,7 @@ export function usePeriods() {
   };
 
   const reuseFormula = (formulaEntry) => {
+    if (!formulaEntry) return; // <-- Validación para evitar error si es undefined
     setFormula(formulaEntry.originalFormula);
     setFormulaName(formulaEntry.name + ' (copia)');
   };
