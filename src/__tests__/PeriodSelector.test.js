@@ -84,7 +84,9 @@ test('no crea un período si ya existe', () => {
     />
   );
   fireEvent.click(screen.getByRole('button', { name: /\+ nuevo período/i }));
-  // No cambies el año/mes, así el período ya existe
+  // Selecciona el año y mes de un período ya existente
+  fireEvent.change(screen.getByLabelText(/año/i), { target: { value: 2025 } });
+  fireEvent.change(screen.getByLabelText(/mes/i), { target: { value: 7 } });
   fireEvent.click(screen.getByRole('button', { name: /crear/i }));
   expect(window.alert).toHaveBeenCalledWith(expect.stringMatching(/ya existe/i));
   expect(createNewPeriod).not.toHaveBeenCalled();
