@@ -25,12 +25,14 @@ function PeriodSelector({
   const [selectedSourceForFormulas, setSelectedSourceForFormulas] = useState('');
 
   const handleCreatePeriod = () => {
+    // Validación de año
     if (newYear < 2020 || newYear > 2030) {
-      alert('El año debe estar entre 2020 y 2030');
+      window.alert('El año debe estar entre 2020 y 2030');
       return;
     }
+    // Validación de mes
     if (newMonth < 1 || newMonth > 12) {
-      alert('El mes no es válido');
+      window.alert('El mes no es válido');
       return;
     }
 
