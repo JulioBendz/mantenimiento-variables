@@ -121,6 +121,22 @@ test('calculateFormula agrega una fórmula y removeFormula la elimina', async ()
     result.current.addVariable();
   });
 
+  act(() => {
+    result.current.setFormula('a+1');
+    result.current.setFormulaName('F1');
+    result.current.calculateFormula();
+  });
+
+  act(() => {
+    result.current.setFormula('a+2');
+    result.current.setFormulaName('F1'); // Usar el mismo nombre
+    result.current.calculateFormula();
+  });
+
+  // Solo debe existir una fórmula con ese nombre y debe ser la original
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  expect(formulas.length).toBe(1);
+  expect(formulas[0].originalFormula).toBe('a+1');
 });
 
 // Tests que ya funcionaban - mantenidos sin cambios
@@ -477,4 +493,27 @@ test('recalculateAllFormulas retorna si no hay fórmulas', () => {
     result.current.recalculateAllFormulas();
   });
   expect(true).toBe(true); // Si no lanza error, cubre el early return
+});
+
+test('createNewPeriod usa nombre por defecto si no se pasa', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.createNewPeriod(2026, 1);
+  });
+  expect(result.current.periods['2026-01'].name).toBe('Enero 2026');
+});
+
+test('deletePeriod no elimina si usuario cancela', () => {
+  window.confirm = jest.fn(() => false);
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.createNewPeriod(2026, 2, 'Febrero 2026');
+  });
+  const prevKeys = Object.keys(result.current.periods);
+  act(() => {
+    result.current.deletePeriod('2026-02');
+  });
+  const keys = Object.keys(result.current.periods);
+  expect(keys.length).toBe(prevKeys.length);
+  expect(result.current.periods['2026-02']).toBeDefined();
 });
