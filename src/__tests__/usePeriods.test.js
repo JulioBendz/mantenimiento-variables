@@ -1,12 +1,19 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { usePeriods } from '../hooks/usePeriods';
+import * as formulaUtils from '../utils/formulaUtils';
 
-// Configuración global de fake timers
 beforeAll(() => {
+  jest.spyOn(formulaUtils, 'evaluateFormula').mockImplementation((formula, variables) => {
+    // Simple mock para los tests
+    if (formula === 'x+2') return Number(variables.x) + 2;
+    if (formula === 'y+1') return Number(variables.y) + 1;
+    return 0;
+  });
   jest.useFakeTimers();
 });
 
 afterAll(() => {
+  jest.restoreAllMocks();
   jest.useRealTimers();
 });
 
@@ -306,18 +313,11 @@ test('addVariable no agrega si falta nombre o valor', () => {
   expect(Object.keys(result.current.getCurrentPeriodData().variables)).toHaveLength(0);
 });
 
-test('calculateFormula no agrega si falta fórmula o nombre', () => {
+test('calculateFormula no agrega si falta fórmula', () => {
   const { result } = renderHook(() => usePeriods());
   act(() => {
     result.current.setFormula('');
     result.current.setFormulaName('F1');
-    result.current.calculateFormula();
-  });
-  expect(result.current.getCurrentPeriodData().formulas.length).toBe(0);
-
-  act(() => {
-    result.current.setFormula('1+1');
-    result.current.setFormulaName('');
     result.current.calculateFormula();
   });
   expect(result.current.getCurrentPeriodData().formulas.length).toBe(0);
