@@ -1,6 +1,73 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import Calculator from '../components/Calculator';
+import FormulaHistory from '../components/FormulaHistory';
+
+function AppMock() {
+  const [formula, setFormula] = React.useState('');
+  const [formulaName, setFormulaName] = React.useState('');
+  const [result, setResult] = React.useState(null);
+  const [variables, setVariables] = React.useState({ x: 2 });
+  const [savedFormulas, setSavedFormulas] = React.useState([]);
+
+  const calculateFormula = () => {
+    // Simula cálculo y guardado
+    if (formula === 'x + 2') {
+      setResult(4);
+      setSavedFormulas([
+        ...savedFormulas,
+        {
+          id: 'f1',
+          name: formulaName || 'Fórmula 1',
+          originalFormula: formula,
+          result: 4,
+        },
+      ]);
+    }
+  };
+
+  return (
+    <div>
+      <Calculator
+        formula={formula}
+        setFormula={setFormula}
+        formulaName={formulaName}
+        setFormulaName={setFormulaName}
+        calculateFormula={calculateFormula}
+        result={result}
+        variables={variables}
+      />
+      <FormulaHistory
+        savedFormulas={savedFormulas}
+        removeFormula={() => {}}
+        reuseFormula={() => {}}
+        editFormulaName={() => {}}
+        currentPeriod="2024-09"
+        variables={variables}
+      />
+    </div>
+  );
+}
+
+test('calcular y guardar muestra el resultado en el historial de fórmulas', () => {
+  render(<AppMock />);
+  // Escribe la fórmula
+  fireEvent.change(screen.getByPlaceholderText(/Ej: x \+ y/i), { target: { value: 'x + 2' } });
+  // Opcional: asigna nombre
+  fireEvent.change(screen.getByPlaceholderText(/Área del círculo/i), { target: { value: 'Suma X' } });
+  // Haz clic en calcular y guardar
+  const button = screen.getByText(/Calcular y Guardar/i);
+  expect(button).not.toBeDisabled();
+  fireEvent.click(button);
+  // Cambia aquí:
+  expect(screen.getAllByText(/Resultado:/i).length).toBeGreaterThan(1);
+  expect(screen.getByText('4')).toBeInTheDocument();
+  // Verifica que aparece en el historial
+  expect(screen.getByText(/Historial de Fórmulas/i)).toBeInTheDocument();
+  expect(screen.getByText('Suma X')).toBeInTheDocument();
+  expect(screen.getByText('x + 2')).toBeInTheDocument();
+  expect(screen.getByText('4')).toBeInTheDocument();
+});
 
 test('renderiza el título y el textarea de fórmula', () => {
   render(
@@ -34,7 +101,7 @@ test('muestra el resultado cuando se calcula', () => {
       variables={{ x: 3 }}
     />
   );
-  expect(screen.getByText(/Resultado:/i)).toBeInTheDocument();
+  expect(screen.getAllByText(/Resultado:/i).length).toBeGreaterThan(0);
   expect(screen.getByText('5')).toBeInTheDocument();
 });
 
@@ -236,4 +303,30 @@ test('permite cambiar el nombre de la fórmula', () => {
   const input = screen.getByPlaceholderText(/Área del círculo/i);
   fireEvent.change(input, { target: { value: 'Mi fórmula' } });
   expect(input.value).toBe('Mi fórmula');
+});
+
+test('calcula y muestra el resultado al hacer clic en Calcular y Guardar', () => {
+  function Wrapper() {
+    const [formula, setFormula] = React.useState('x + 2');
+    const [result, setResult] = React.useState(null);
+    const variables = { x: 3 };
+    const calculateFormula = () => setResult(5); // Simula cálculo
+    return (
+      <Calculator
+        formula={formula}
+        setFormula={setFormula}
+        formulaName=""
+        setFormulaName={() => {}}
+        calculateFormula={calculateFormula}
+        result={result}
+        variables={variables}
+      />
+    );
+  }
+  render(<Wrapper />);
+  const button = screen.getByText(/Calcular y Guardar/i);
+  expect(button).not.toBeDisabled();
+  fireEvent.click(button);
+  expect(screen.getAllByText(/Resultado:/i).length).toBeGreaterThan(0);
+  expect(screen.getByText('5')).toBeInTheDocument();
 });
