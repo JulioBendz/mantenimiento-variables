@@ -339,13 +339,10 @@ export function usePeriods() {
   // Calcular y guardar fórmula desde el calculador
   const calculateFormula = () => {
     try {
-      if (!formula || !formulaName) return; // <-- Validación para evitar agregar fórmulas vacías
+      if (!formula) return; // Solo bloquea si la fórmula está vacía
       const currentData = getCurrentPeriodData();
-      // Limpia la fórmula antes de evaluar y guardar
       const cleanFormula = formula.replace(/\r?\n|\r/g, ' ').trim();
-      // Reemplaza ^ por ** para la evaluación
       let formulaToEval = cleanFormula.replace(/\^/g, '**');
-      // Evaluación centralizada
       const calculatedResult = evaluateFormula(formulaToEval, currentData.variables);
       setResult(calculatedResult);
       const finalFormulaName = formulaName || `Fórmula ${Date.now()}`;
@@ -364,7 +361,7 @@ export function usePeriods() {
                 ? {
                   ...f,
                   originalFormula: formulaToEval,
-                  evaluatedFormula: formulaToEval, // lo que uses para mostrar
+                  evaluatedFormula: formulaToEval,
                   result: calculatedResult,
                   timestamp: new Date().toLocaleTimeString(),
                   date: new Date().toLocaleDateString(),
@@ -379,7 +376,7 @@ export function usePeriods() {
           id: Date.now(),
           name: finalFormulaName,
           originalFormula: formulaToEval,
-          evaluatedFormula: formulaToEval, // lo que uses para mostrar
+          evaluatedFormula: formulaToEval,
           result: calculatedResult,
           timestamp: new Date().toLocaleTimeString(),
           date: new Date().toLocaleDateString(),
