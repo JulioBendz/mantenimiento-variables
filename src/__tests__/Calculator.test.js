@@ -330,3 +330,38 @@ test('calcula y muestra el resultado al hacer clic en Calcular y Guardar', () =>
   expect(screen.getAllByText(/Resultado:/i).length).toBeGreaterThan(0);
   expect(screen.getByText('5')).toBeInTheDocument();
 });
+
+test('muestra error si falta el nombre de la fórmula al calcular', () => {
+  function Wrapper() {
+    const [formula, setFormula] = React.useState('x + 2');
+    const [formulaName, setFormulaName] = React.useState('');
+    const [result, setResult] = React.useState(null);
+    const [error, setError] = React.useState(null);
+    const variables = { x: 3 };
+    const calculateFormula = () => {
+      if (!formulaName) {
+        setError('Debes ingresar un nombre para la fórmula.');
+        return;
+      }
+      setResult(5);
+      setError(null);
+    };
+    return (
+      <Calculator
+        formula={formula}
+        setFormula={setFormula}
+        formulaName={formulaName}
+        setFormulaName={setFormulaName}
+        calculateFormula={calculateFormula}
+        result={result}
+        variables={variables}
+        error={error}
+      />
+    );
+  }
+  render(<Wrapper />);
+  const button = screen.getByText(/Calcular y Guardar/i);
+  expect(button).not.toBeDisabled();
+  fireEvent.click(button);
+  expect(screen.getByText(/Debes ingresar un nombre para la fórmula/i)).toBeInTheDocument();
+});
