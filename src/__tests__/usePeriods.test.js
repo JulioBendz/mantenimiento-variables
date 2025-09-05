@@ -4,9 +4,18 @@ import * as formulaUtils from '../utils/formulaUtils';
 
 beforeAll(() => {
   jest.spyOn(formulaUtils, 'evaluateFormula').mockImplementation((formula, variables) => {
-    // Simple mock para los tests
+    // Mock para todos los casos usados en los tests
     if (formula === 'x+2') return Number(variables.x) + 2;
     if (formula === 'y+1') return Number(variables.y) + 1;
+    if (formula === 'a+3') return Number(variables.a) + 3;
+    if (formula === 'a+1') return Number(variables.a) + 1;
+    if (formula === 'a+2') return Number(variables.a) + 2;
+    if (formula === 'x+1') return Number(variables.x) + 1;
+    if (formula === 'b/0') throw new Error('error');
+    if (formula === 'a+1') return Number(variables.a) + 1;
+    if (formula === 'a+2') return Number(variables.a) + 2;
+    if (formula === 'x+1') return Number(variables.x) + 1;
+    if (formula === 'x+2') return Number(variables.x) + 2;
     return 0;
   });
   jest.useFakeTimers();
@@ -372,7 +381,7 @@ test('setPeriods actualiza el estado de periods', () => {
   expect(result.current.periods.test).toBeDefined();
 });
 
-test('setCurrentPeriod actualiza el período actual', () => {
+test('setCurrentPeriod actualiza el período current', () => {
   const { result } = renderHook(() => usePeriods());
   act(() => {
     result.current.setCurrentPeriod('otro');
@@ -456,10 +465,10 @@ test('muestra error en la fórmula si evaluateFormula lanza error', () => {
   formulaUtils.evaluateFormula = originalEval;
 });
 
-test('formulaUsesVariable detecta variable en la fórmula', () => {
+test('formulaUsesVariable detecta variable exacta en la fórmula', () => {
   const { result } = renderHook(() => usePeriods());
   // Crea una fórmula simulada
-  const formula = { originalFormula: 'x + y' };
+  const formula = { originalFormula: 'x + y + x1' };
   // Usa el método expuesto indirectamente
   expect(result.current.formulaName).toBe(''); // Solo para usar result.current
   // Acceso directo (si la expones para test)
@@ -517,4 +526,17 @@ test('deletePeriod no elimina si usuario cancela', () => {
   const keys = Object.keys(result.current.periods);
   expect(keys.length).toBe(prevKeys.length);
   expect(result.current.periods['2026-02']).toBeDefined();
+});
+
+test('reuseFormula copia fórmula al editor', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => {
+    result.current.setFormula('x+1');
+    result.current.setFormulaName('F1');
+    result.current.calculateFormula();
+    const formula = result.current.getCurrentPeriodData().formulas[0];
+    result.current.reuseFormula(formula);
+  });
+  expect(result.current.formula).toBe('x+1');
+  expect(result.current.formulaName).toContain('F1');
 });
