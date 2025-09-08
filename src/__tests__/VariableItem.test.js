@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import VariableItem from '../components/VariableItem';
+import { act } from 'react';
 
 test('muestra el nombre y valor de la variable', () => {
   render(<VariableItem name="x" value={10} />);
@@ -349,4 +350,19 @@ test('llama a onDeletePanelClose al hacer clic en Cancelar en el panel de elimin
   );
   fireEvent.click(screen.getByTitle(/Cancelar selección/i));
   expect(onDeletePanelClose).toHaveBeenCalled();
+});
+jest.useFakeTimers();
+
+test('muestra "Copiado" al hacer clic en el botón de copiar y desaparece después del timeout', () => {
+  render(<VariableItem name="x" value={10} onCopy={() => {}} />);
+  const copyBtn = screen.getByTitle(/copiar variable/i);
+  fireEvent.click(copyBtn);
+  expect(screen.getByText(/Copiado/)).toBeInTheDocument();
+
+  act(() => {
+    jest.runAllTimers();
+  });
+
+  // "Copiado" ya no debe estar después del timeout
+  expect(screen.queryByText(/Copiado/)).not.toBeInTheDocument();
 });
