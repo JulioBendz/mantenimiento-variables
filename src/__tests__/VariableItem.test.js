@@ -354,15 +354,18 @@ test('llama a onDeletePanelClose al hacer clic en Cancelar en el panel de elimin
 jest.useFakeTimers();
 
 test('muestra "Copiado" al hacer clic en el botón de copiar y desaparece después del timeout', () => {
-  render(<VariableItem name="x" value={10} onCopy={() => {}} />);
+  act(() => {
+    render(<VariableItem name="x" value={10} onCopy={() => {}} />);
+  });
   const copyBtn = screen.getByTitle(/copiar variable/i);
-  fireEvent.click(copyBtn);
+  act(() => {
+    fireEvent.click(copyBtn);
+  });
   expect(screen.getByText(/Copiado/)).toBeInTheDocument();
 
   act(() => {
     jest.runAllTimers();
   });
 
-  // "Copiado" ya no debe estar después del timeout
   expect(screen.queryByText(/Copiado/)).not.toBeInTheDocument();
 });
