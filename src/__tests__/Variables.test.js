@@ -939,3 +939,24 @@ test('feedback visual al copiar variable manipula el DOM correctamente si el ele
   document.body.removeChild(fakeIcon);
   jest.useRealTimers();
 });
+
+test('handleRemoveVariable no elimina si usuario cancela confirmación', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => false);
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  expect(removeVariable).not.toHaveBeenCalled();
+});
