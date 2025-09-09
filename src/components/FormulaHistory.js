@@ -522,14 +522,14 @@ function FormulaHistory({
                 stats[analysis.category]++;
               }
               return stats;
-            }, { total: 0, excellent: 0, acceptable: 0, critical: 0 });
+            }, { total: 0, excellent: 0, intermediate: 0, critical: 0 }); // <-- aquí
 
             if (percentageStats.total > 0) {
               return (
                 <div className="text-xs text-blue-600 mt-2 flex items-center gap-4">
                   <span>📈 Análisis de porcentajes:</span>
                   <span className="text-green-600">✅ Excelentes: {percentageStats.excellent}</span>
-                  <span className="text-yellow-600">⚠️ Intermedio: {percentageStats.acceptable}</span>
+                  <span className="text-yellow-600">⚠️ Intermedio: {percentageStats.intermediate}</span> {/* <-- aquí */}
                   <span className="text-red-600">❌ Críticos: {percentageStats.critical}</span>
                 </div>
               );
