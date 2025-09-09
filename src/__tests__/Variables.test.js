@@ -300,9 +300,11 @@ test('llama a navigator.clipboard.writeText al copiar variable', () => {
   expect(writeText).toHaveBeenCalledWith('x');
 });
 
-test('usa fallbackCopyTextToClipboard si navigator.clipboard no está disponible', () => {
+test('usa fallbackCopyTextToClipboard si navigator.clipboard.writeText falla', async () => {
   const originalClipboard = navigator.clipboard;
-  delete navigator.clipboard;
+  navigator.clipboard = {
+    writeText: jest.fn(() => Promise.reject(new Error('fail')))
+  };
   document.execCommand = jest.fn();
   render(
     <Variables
@@ -318,8 +320,10 @@ test('usa fallbackCopyTextToClipboard si navigator.clipboard no está disponible
   );
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
   fireEvent.click(screen.getByTitle(/Copiar variable/i));
+  // Espera a que el fallback se ejecute
+  await new Promise(res => setTimeout(res, 10));
   expect(document.execCommand).toHaveBeenCalledWith('copy');
-  navigator.clipboard = originalClipboard; // restaurar
+  navigator.clipboard = originalClipboard;
 });
 
 test('muestra error si fallbackCopyTextToClipboard falla', () => {
