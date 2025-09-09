@@ -706,3 +706,64 @@ test('editFormulaName no cambia el nombre si el nuevo nombre es vacío o igual',
   });
   expect(result.current.getCurrentPeriodData().formulas[0].name).toBe('F1');
 });
+
+test('recalculateFormulasForVariable no modifica fórmulas si variable no está presente', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  // Agrega variable y fórmula que NO usa la variable 'z'
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('x+2'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+
+  // Llama recalculateFormulasForVariable con variable que no existe en la fórmula
+  act(() => {
+    result.current.recalculateFormulasForVariable('z');
+  });
+
+  // La fórmula debe seguir igual
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  expect(formulas.length).toBe(1);
+  expect(formulas[0].originalFormula).toBe('x+2');
+});
+
+test('calculateFormula setea error si evaluateFormula lanza excepción', () => {
+  const { result } = renderHook(() => usePeriods());
+  // Mock que lanza error
+  jest.spyOn(formulaUtils, 'evaluateFormula').mockImplementation(() => { throw new Error('fail'); });
+
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('x+2'); });
+  act(() => { result.current.setFormulaName('F1'); });
+
+  act(() => { result.current.calculateFormula(); });
+
+  expect(result.current.result).toBe('Error en la fórmula');
+});
+
+test('calculateFormula reemplaza fórmula si usuario acepta confirmación', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  // Agrega variable y fórmula
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('x+2'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+
+  // Cambia la fórmula y vuelve a calcular con el mismo nombre
+  act(() => { result.current.setFormula('x+1'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  window.confirm = jest.fn(() => true);
+
+  act(() => { result.current.calculateFormula(); });
+
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  expect(formulas.length).toBe(1);
+  expect(formulas[0].originalFormula).toBe('x+1');
+});
