@@ -367,10 +367,9 @@ test('editFormulaName no hace nada si la fórmula a editar no existe', () => {
 // --- Cobertura para editFormulaName cuando el id no existe (línea 455) ---
 test('editFormulaName no hace nada si el id no existe', () => {
   const { result } = renderHook(() => usePeriods());
-  act(() => {
-    result.current.editFormulaName('no-existe', 'NuevoNombre');
-  });
-  expect(true).toBe(true); // Solo cubre el early return
+  act(() => { result.current.editFormulaName('id-inexistente', 'NuevoNombre'); });
+  // No debe lanzar error ni modificar nada
+  expect(true).toBe(true);
 });
 
 test('setPeriods actualiza el estado de periods', () => {
@@ -421,6 +420,12 @@ test('getMonthName retorna el nombre correcto', () => {
   const { result } = renderHook(() => usePeriods());
   expect(result.current.getMonthName(1)).toBe('Enero');
   expect(result.current.getMonthName(12)).toBe('Diciembre');
+});
+
+test('getMonthName retorna vacío si el mes está fuera de rango', () => {
+  const { result } = renderHook(() => usePeriods());
+  expect(result.current.getMonthName(0)).toBeUndefined();
+  expect(result.current.getMonthName(13)).toBeUndefined();
 });
 
 test('getCurrentPeriodData retorna datos del período actual', () => {
@@ -685,7 +690,6 @@ test('editFormulaName no reemplaza si usuario cancela', () => {
 
 test('editFormulaName no cambia el nombre si el nuevo nombre es vacío o igual', () => {
   const { result } = renderHook(() => usePeriods());
-
   act(() => { result.current.setVariableName('a'); });
   act(() => { result.current.setVariableValue('2'); });
   act(() => { result.current.addVariable(); });
@@ -813,4 +817,46 @@ test('recalculateAllFormulas maneja error en evaluateFormula', () => {
   const formulas = result.current.getCurrentPeriodData().formulas;
   expect(formulas[0].result).toBe('Error en la fórmula');
   expect(formulas[0].evaluatedFormula).toBe('Error en evaluación');
+});
+
+test('copyVariablesFromPreviousPeriod no copia si usuario cancela confirmación', () => {
+  const { result } = renderHook(() => usePeriods());
+  // Crea dos períodos y agrega variable al primero
+  act(() => { result.current.createNewPeriod(2025, 1, 'Enero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-01'); });
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.createNewPeriod(2025, 2, 'Febrero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-02'); });
+
+  window.confirm = jest.fn(() => false);
+
+  act(() => {
+    result.current.copyVariablesFromPreviousPeriod('2025-02');
+  });
+
+  // No debe copiar la variable
+  expect(result.current.getCurrentPeriodData().variables.x).toBeUndefined();
+});
+
+test('copyFormulasFromPreviousPeriod no copia si usuario cancela confirmación', () => {
+  const { result } = renderHook(() => usePeriods());
+  // Crea dos períodos y agrega fórmula al primero
+  act(() => { result.current.createNewPeriod(2025, 1, 'Enero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-01'); });
+  act(() => { result.current.setFormula('1+1'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+  act(() => { result.current.createNewPeriod(2025, 2, 'Febrero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-02'); });
+
+  window.confirm = jest.fn(() => false);
+
+  act(() => {
+    result.current.copyFormulasFromPreviousPeriod('2025-02');
+  });
+
+  // No debe copiar la fórmula
+  expect(result.current.getCurrentPeriodData().formulas.length).toBe(0);
 });
