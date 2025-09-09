@@ -541,6 +541,21 @@ test('reuseFormula copia fórmula al editor', () => {
   expect(result.current.formulaName).toContain('F1');
 });
 
+test('reuseFormula setea formula y formulaName correctamente', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => { result.current.setFormula('x+2'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+  const formula = result.current.getCurrentPeriodData().formulas[0];
+
+  act(() => {
+    result.current.reuseFormula(formula);
+  });
+
+  expect(result.current.formula).toBe('x+2');
+  expect(result.current.formulaName).toContain('F1');
+});
+
 test('recalcula automáticamente las fórmulas al cambiar variables', async () => {
   jest.spyOn(formulaUtils, 'evaluateFormula').mockImplementation((formula, variables) => {
     if (formula === 'x+2') return Number(variables.x) + 2;
@@ -611,17 +626,17 @@ test('copyFormulasFromPreviousPeriod copia varias fórmulas si usuario acepta', 
   expect(formulaNames).toContain('F2');
 });
 
-test('editFormulaName reemplaza si usuario acepta', () => {
+test('editFormulaName reemplaza fórmula si usuario acepta confirmación', () => {
   const { result } = renderHook(() => usePeriods());
 
   // Agrega dos fórmulas
-  act(() => { result.current.setVariableName('a'); });
+  act(() => { result.current.setVariableName('x'); });
   act(() => { result.current.setVariableValue('2'); });
   act(() => { result.current.addVariable(); });
-  act(() => { result.current.setFormula('a+1'); });
+  act(() => { result.current.setFormula('x+2'); });
   act(() => { result.current.setFormulaName('F1'); });
   act(() => { result.current.calculateFormula(); });
-  act(() => { result.current.setFormula('a+2'); });
+  act(() => { result.current.setFormula('x+1'); });
   act(() => { result.current.setFormulaName('F2'); });
   act(() => { result.current.calculateFormula(); });
 
@@ -635,7 +650,7 @@ test('editFormulaName reemplaza si usuario acepta', () => {
   });
 
   const updatedFormulas = result.current.getCurrentPeriodData().formulas;
-  // Solo debe quedar una fórmula con el nombre F2 (la reemplazada)
+  // Ahora deben existir dos fórmulas con el nombre F2 (la reemplazada)
   expect(updatedFormulas.filter(f => f.name === 'F2').length).toBe(2);
   expect(updatedFormulas.filter(f => f.name === 'F1').length).toBe(0);
 });
