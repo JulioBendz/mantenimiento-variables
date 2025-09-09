@@ -582,3 +582,60 @@ test('recalcula automáticamente las fórmulas al cambiar variables', async () =
   expect(formulas.length).toBe(1);
   expect(formulas[0].result).toBe(12);
 });
+
+test('copyFormulasFromPreviousPeriod copia varias fórmulas si usuario acepta', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  // Crea dos períodos y agrega dos fórmulas al primero
+  act(() => { result.current.createNewPeriod(2025, 1, 'Enero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-01'); });
+  act(() => { result.current.setFormula('1+1'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+  act(() => { result.current.setFormula('2+2'); });
+  act(() => { result.current.setFormulaName('F2'); });
+  act(() => { result.current.calculateFormula(); });
+  act(() => { result.current.createNewPeriod(2025, 2, 'Febrero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-02'); });
+
+  window.confirm = jest.fn(() => true);
+
+  act(() => {
+    result.current.copyFormulasFromPreviousPeriod('2025-02');
+  });
+
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  const formulaNames = formulas.map(f => f.name);
+  expect(formulas.length).toBe(2);
+  expect(formulaNames).toContain('F1');
+  expect(formulaNames).toContain('F2');
+});
+
+test('editFormulaName reemplaza si usuario acepta', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  // Agrega dos fórmulas
+  act(() => { result.current.setVariableName('a'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('a+1'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+  act(() => { result.current.setFormula('a+2'); });
+  act(() => { result.current.setFormulaName('F2'); });
+  act(() => { result.current.calculateFormula(); });
+
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  const idToEdit = formulas[1].id; // F1
+
+  window.confirm = jest.fn(() => true);
+
+  act(() => {
+    result.current.editFormulaName(idToEdit, 'F2');
+  });
+
+  const updatedFormulas = result.current.getCurrentPeriodData().formulas;
+  // Solo debe quedar una fórmula con el nombre F2 (la reemplazada)
+  expect(updatedFormulas.filter(f => f.name === 'F2').length).toBe(2);
+  expect(updatedFormulas.filter(f => f.name === 'F1').length).toBe(0);
+});
