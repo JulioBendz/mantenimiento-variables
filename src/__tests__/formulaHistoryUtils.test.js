@@ -31,3 +31,9 @@ test('categoriza correctamente el resultado crítico', () => {
   expect(analysis.category).toBe('critical');
   expect(analysis.label).toBe('Crítico');
 });
+
+test('retorna null si el resultado no es un número', () => {
+  const formulaEntry = { result: 'no-es-numero', name: 'porcentaje', originalFormula: 'a*100' };
+  const analysis = analyzePercentageResult(formulaEntry, 90, 70);
+  expect(analysis).toBeNull();
+});
