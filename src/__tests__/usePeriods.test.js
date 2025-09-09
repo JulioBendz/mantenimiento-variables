@@ -639,3 +639,55 @@ test('editFormulaName reemplaza si usuario acepta', () => {
   expect(updatedFormulas.filter(f => f.name === 'F2').length).toBe(2);
   expect(updatedFormulas.filter(f => f.name === 'F1').length).toBe(0);
 });
+
+test('editFormulaName no reemplaza si usuario cancela', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  // Agrega dos fórmulas
+  act(() => { result.current.setVariableName('a'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('a+1'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+  act(() => { result.current.setFormula('a+2'); });
+  act(() => { result.current.setFormulaName('F2'); });
+  act(() => { result.current.calculateFormula(); });
+
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  const idToEdit = formulas[1].id; // F1
+
+  window.confirm = jest.fn(() => false);
+
+  act(() => {
+    result.current.editFormulaName(idToEdit, 'F2');
+  });
+
+  const updatedFormulas = result.current.getCurrentPeriodData().formulas;
+  // Ahora deben existir dos fórmulas con el nombre F2
+  expect(updatedFormulas.filter(f => f.name === 'F2').length).toBe(2);
+  expect(updatedFormulas.filter(f => f.name === 'F1').length).toBe(0);
+});
+
+test('editFormulaName no cambia el nombre si el nuevo nombre es vacío o igual', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  act(() => { result.current.setVariableName('a'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('a+1'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+
+  const formula = result.current.getCurrentPeriodData().formulas[0];
+
+  act(() => {
+    result.current.editFormulaName(formula.id, '');
+  });
+  expect(result.current.getCurrentPeriodData().formulas[0].name).toBe('F1');
+
+  act(() => {
+    result.current.editFormulaName(formula.id, 'F1');
+  });
+  expect(result.current.getCurrentPeriodData().formulas[0].name).toBe('F1');
+});
