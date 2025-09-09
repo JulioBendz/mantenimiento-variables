@@ -630,7 +630,7 @@ test('copyFormulasFromPreviousPeriod copia varias fórmulas si usuario acepta', 
   expect(formulaNames).toContain('F2');
 });
 
-test('editFormulaName reemplaza fórmula si usuario acepta confirmación', () => {
+test('editFormulaName reemplaza fórmula solo si usuario acepta confirmación', () => {
   const { result } = renderHook(() => usePeriods());
 
   // Agrega dos fórmulas
@@ -654,8 +654,8 @@ test('editFormulaName reemplaza fórmula si usuario acepta confirmación', () =>
   });
 
   const updatedFormulas = result.current.getCurrentPeriodData().formulas;
-  // Ahora deben existir dos fórmulas con el nombre F2 (la reemplazada)
-  expect(updatedFormulas.filter(f => f.name === 'F2').length).toBe(2);
+  // Solo debe quedar una fórmula con el nombre F2
+  expect(updatedFormulas.filter(f => f.name === 'F2').length).toBe(1);
   expect(updatedFormulas.filter(f => f.name === 'F1').length).toBe(0);
 });
 
@@ -683,9 +683,9 @@ test('editFormulaName no reemplaza si usuario cancela', () => {
   });
 
   const updatedFormulas = result.current.getCurrentPeriodData().formulas;
-  // Ahora deben existir dos fórmulas con el nombre F2
-  expect(updatedFormulas.filter(f => f.name === 'F2').length).toBe(2);
-  expect(updatedFormulas.filter(f => f.name === 'F1').length).toBe(0);
+  // Deben seguir existiendo ambas fórmulas, una F1 y una F2
+  expect(updatedFormulas.filter(f => f.name === 'F2').length).toBe(1);
+  expect(updatedFormulas.filter(f => f.name === 'F1').length).toBe(1);
 });
 
 test('editFormulaName no cambia el nombre si el nuevo nombre es vacío o igual', () => {
@@ -859,4 +859,87 @@ test('copyFormulasFromPreviousPeriod no copia si usuario cancela confirmación',
 
   // No debe copiar la fórmula
   expect(result.current.getCurrentPeriodData().formulas.length).toBe(0);
+});
+
+test('recalculateAllFormulas retorna temprano si no hay fórmulas (efecto)', () => {
+  const { result } = renderHook(() => usePeriods());
+  // Cambia a un período sin fórmulas
+  act(() => {
+    result.current.createNewPeriod(2027, 1, 'Enero 2027');
+    result.current.setCurrentPeriod('2027-01');
+  });
+  // El useEffect se dispara pero no hace nada porque no hay fórmulas
+  expect(result.current.getCurrentPeriodData().formulas.length).toBe(0);
+});
+
+test('copyVariablesFromPreviousPeriod copia variables solo si usuario acepta', () => {
+  const { result } = renderHook(() => usePeriods());
+  // Crea dos períodos y agrega variable al primero
+  act(() => { result.current.createNewPeriod(2025, 1, 'Enero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-01'); });
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.createNewPeriod(2025, 2, 'Febrero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-02'); });
+
+  window.confirm = jest.fn(() => true);
+
+  act(() => {
+    result.current.copyVariablesFromPreviousPeriod('2025-02');
+  });
+
+  // Debe copiar la variable
+  expect(result.current.getCurrentPeriodData().variables.x).toBe(2);
+});
+
+test('addVariable reemplaza variable solo si usuario acepta confirmación', () => {
+  const { result } = renderHook(() => usePeriods());
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('1'); });
+  act(() => { result.current.addVariable(); });
+
+  // Intenta reemplazar
+  window.confirm = jest.fn(() => true);
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('99'); });
+  act(() => { result.current.addVariable(); });
+
+  expect(result.current.getCurrentPeriodData().variables.x).toBe(99);
+});
+
+test('removeFormula elimina solo la fórmula con el id dado', () => {
+  const { result } = renderHook(() => usePeriods());
+  // Agrega dos fórmulas con nombres distintos
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('x+2'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+  act(() => { result.current.setFormula('x+1'); });
+  act(() => { result.current.setFormulaName('F2'); });
+  act(() => { result.current.calculateFormula(); });
+
+  let formulas = result.current.getCurrentPeriodData().formulas;
+  console.log('Formulas antes de eliminar:', formulas);
+
+  expect(formulas.length).toBe(2);
+
+  const idF1 = formulas.find(f => f.name === 'F1').id;
+  const idF2 = formulas.find(f => f.name === 'F2').id;
+  console.log('idF1:', idF1, 'idF2:', idF2);
+
+  // Elimina F1
+  act(() => {
+    result.current.removeFormula(idF1);
+  });
+
+  const updatedFormulas = result.current.getCurrentPeriodData().formulas;
+  console.log('Formulas después de eliminar:', updatedFormulas);
+
+  // F1 ya no debe estar, F2 sí
+  expect(updatedFormulas.some(f => f.id === idF1)).toBe(false);
+  expect(updatedFormulas.some(f => f.id === idF2)).toBe(true);
+  expect(updatedFormulas.length).toBe(1);
 });
