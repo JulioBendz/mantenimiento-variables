@@ -865,3 +865,47 @@ test('duplicateVariable agrega sufijo incremental correctamente', () => {
   fireEvent.click(screen.getByText(/Duplicar/i));
   expect(editVariable).toHaveBeenCalledWith('x_copia3', 10);
 });
+
+test('calcula altura dinámica correctamente cuando no hay variables', () => {
+  render(
+    <Variables
+      variables={{}}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  // No hay variables, así que el mensaje debe estar presente
+  expect(screen.getByText(/No hay variables definidas/i)).toBeInTheDocument();
+});
+
+test('permite eliminar variables seleccionadas en modo múltiple', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => true);
+  const variables = { x: 10, y: 20 };
+  render(
+    <Variables
+      variables={variables}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  // Selecciona el botón correcto (el último suele ser el del panel de selección)
+  const eliminarBtns = screen.getAllByText(/Eliminar\s*\(2\)/i);
+  fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
+  expect(removeVariable).toHaveBeenCalledWith('x');
+  expect(removeVariable).toHaveBeenCalledWith('y');
+});
