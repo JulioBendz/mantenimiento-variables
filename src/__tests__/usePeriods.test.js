@@ -922,13 +922,11 @@ test('removeFormula elimina solo la fórmula con el id dado', () => {
   act(() => { result.current.calculateFormula(); });
 
   let formulas = result.current.getCurrentPeriodData().formulas;
-  console.log('Formulas antes de eliminar:', formulas);
 
   expect(formulas.length).toBe(2);
 
   const idF1 = formulas.find(f => f.name === 'F1').id;
   const idF2 = formulas.find(f => f.name === 'F2').id;
-  console.log('idF1:', idF1, 'idF2:', idF2);
 
   // Elimina F1
   act(() => {
@@ -936,7 +934,6 @@ test('removeFormula elimina solo la fórmula con el id dado', () => {
   });
 
   const updatedFormulas = result.current.getCurrentPeriodData().formulas;
-  console.log('Formulas después de eliminar:', updatedFormulas);
 
   // F1 ya no debe estar, F2 sí
   expect(updatedFormulas.some(f => f.id === idF1)).toBe(false);
