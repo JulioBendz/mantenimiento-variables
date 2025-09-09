@@ -824,3 +824,44 @@ test('usa fallbackCopyTextToClipboard si navigator.clipboard no está disponible
   expect(document.execCommand).toHaveBeenCalledWith('copy');
   navigator.clipboard = originalClipboard; // restaurar
 });
+
+test('no elimina variable si usuario cancela confirmación', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => false);
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  expect(removeVariable).not.toHaveBeenCalled();
+});
+
+test('duplicateVariable agrega sufijo incremental correctamente', () => {
+  const editVariable = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10, x_copia: 10, x_copia1: 10, x_copia2: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={editVariable}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Duplicar/i));
+  expect(editVariable).toHaveBeenCalledWith('x_copia3', 10);
+});
