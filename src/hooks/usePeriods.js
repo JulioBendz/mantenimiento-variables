@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { evaluateFormula } from '../utils/formulaUtils';
 
+let formulaIdCounter = 1; // contador global para ids únicos
+
 export function usePeriods() {
   // Helpers
   const getCurrentPeriodKey = () => {
@@ -268,7 +270,7 @@ export function usePeriods() {
     if (confirmCopy) {
       const copiedFormulas = sourceFormulas.map(formula => ({
         ...formula,
-        id: Date.now() + Math.random(),
+        id: formulaIdCounter++, // usa el contador incremental
         timestamp: new Date().toLocaleTimeString(),
         date: new Date().toLocaleDateString(),
         result: null,
@@ -339,7 +341,7 @@ export function usePeriods() {
   // Calcular y guardar fórmula desde el calculador
   const calculateFormula = () => {
     try {
-      if (!formula) return; // Solo bloquea si la fórmula está vacía
+      if (!formula) return;
       const currentData = getCurrentPeriodData();
       const cleanFormula = formula.replace(/\r?\n|\r/g, ' ').trim();
       let formulaToEval = cleanFormula.replace(/\^/g, '**');
@@ -373,7 +375,7 @@ export function usePeriods() {
         }));
       } else {
         const newFormulaEntry = {
-          id: Date.now(),
+          id: formulaIdCounter++, // usa el contador incremental
           name: finalFormulaName,
           originalFormula: formulaToEval,
           evaluatedFormula: formulaToEval,
