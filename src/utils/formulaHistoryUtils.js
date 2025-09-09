@@ -44,7 +44,7 @@ export function renderPercentageAnalysis(formulaEntry, excellentMin = 90, accept
           <div
             className={`h-full transition-all duration-300 ${
               analysis.category === 'excellent' ? 'bg-green-500' :
-              analysis.category === 'acceptable' ? 'bg-yellow-500' : 'bg-red-500'
+              analysis.category === 'intermediate' ? 'bg-yellow-500' : 'bg-red-500'
             }`}
             style={{ width: `${Math.min(analysis.percentage, 100)}%` }}
           ></div>
