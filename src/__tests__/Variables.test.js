@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import Variables from '../components/Variables';
 import VariableItem from '../components/VariableItem';
 
@@ -645,7 +645,9 @@ test('feedback visual al copiar variable manipula el DOM correctamente', async (
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
   fireEvent.click(screen.getByTitle(/Copiar variable "x" al portapapeles/i));
   // Espera a que el setTimeout cambie el texto
-  await new Promise((resolve) => setTimeout(resolve, 1100));
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 1100));
+  });
   expect(['✓', '📄']).toContain(fakeIcon.textContent);
   document.body.removeChild(fakeIcon);
 });
