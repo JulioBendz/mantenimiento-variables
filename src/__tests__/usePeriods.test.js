@@ -489,11 +489,10 @@ test('formulaUsesVariable detecta variable exacta en la fórmula', () => {
 
 test('recalculateFormulasForVariable retorna si no hay fórmulas', () => {
   const { result } = renderHook(() => usePeriods());
-  // No hay fórmulas en el período actual
   act(() => {
     result.current.recalculateFormulasForVariable('x');
   });
-  expect(true).toBe(true); // Si no lanza error, cubre el early return
+  expect(true).toBe(true);
 });
 
 test('recalculateAllFormulas retorna si no hay fórmulas', () => {
@@ -766,4 +765,52 @@ test('calculateFormula reemplaza fórmula si usuario acepta confirmación', () =
   const formulas = result.current.getCurrentPeriodData().formulas;
   expect(formulas.length).toBe(1);
   expect(formulas[0].originalFormula).toBe('x+1');
+});
+
+test('recalculateFormulasForVariable maneja error en evaluateFormula', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  // 1. Agrega la fórmula con el mock normal
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('x+2'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+
+  // 2. Cambia el mock para que lance error
+  jest.spyOn(formulaUtils, 'evaluateFormula').mockImplementation(() => { throw new Error('fail'); });
+
+  // 3. Llama al recálculo
+  act(() => {
+    result.current.recalculateFormulasForVariable('x');
+  });
+
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  expect(formulas[0].result).toBe('Error en la fórmula');
+  expect(formulas[0].evaluatedFormula).toBe('Error en evaluación');
+});
+
+test('recalculateAllFormulas maneja error en evaluateFormula', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  // 1. Agrega la fórmula con el mock normal
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('x+2'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+
+  // 2. Cambia el mock para que lance error
+  jest.spyOn(formulaUtils, 'evaluateFormula').mockImplementation(() => { throw new Error('fail'); });
+
+  // 3. Llama al recálculo
+  act(() => {
+    result.current.recalculateAllFormulas();
+  });
+
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  expect(formulas[0].result).toBe('Error en la fórmula');
+  expect(formulas[0].evaluatedFormula).toBe('Error en evaluación');
 });
