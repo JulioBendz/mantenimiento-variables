@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { usePeriods } from '../hooks/usePeriods';
 import * as formulaUtils from '../utils/formulaUtils';
 
@@ -539,4 +539,46 @@ test('reuseFormula copia fórmula al editor', () => {
   });
   expect(result.current.formula).toBe('x+1');
   expect(result.current.formulaName).toContain('F1');
+});
+
+test('recalcula automáticamente las fórmulas al cambiar variables', async () => {
+  jest.spyOn(formulaUtils, 'evaluateFormula').mockImplementation((formula, variables) => {
+    if (formula === 'x+2') return Number(variables.x) + 2;
+    return 0;
+  });
+
+  const { result } = renderHook(() => usePeriods());
+
+  act(() => {
+    result.current.createNewPeriod(2025, 12, 'Diciembre 2025');
+    result.current.setCurrentPeriod('2025-12');
+  });
+
+  // Setea cada valor en un act separado y espera el estado actualizado
+  act(() => { 
+    result.current.setVariableName('x');
+    result.current.setVariableValue('2');
+    result.current.addVariable();
+    result.current.setFormula('x+2');
+    result.current.setFormulaName('F1');
+  });
+
+  // Ahora sí, los valores estarán presentes
+  act(() => { result.current.calculateFormula(); });
+
+  let formulas = result.current.getCurrentPeriodData().formulas;
+  expect(formulas.length).toBe(1);
+
+  act(() => {
+    result.current.editVariable('x', 10);
+  });
+
+  await act(async () => {
+    jest.runAllTimers();
+    await Promise.resolve();
+  });
+
+  formulas = result.current.getCurrentPeriodData().formulas;
+  expect(formulas.length).toBe(1);
+  expect(formulas[0].result).toBe(12);
 });
