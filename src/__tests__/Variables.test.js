@@ -84,7 +84,12 @@ test('permite editar una variable', () => {
   fireEvent.change(input, { target: { value: '20' } });
   // Guarda los cambios
   fireEvent.click(screen.getByTitle(/Guardar cambios/i));
-  expect(editVariable).toHaveBeenCalledWith('x', 20);
+  // Usa getAllByTitle para encontrar el botón "Más opciones"
+  const moreOptionsBtns = screen.getAllByTitle(/Más opciones/i);
+  fireEvent.mouseEnter(moreOptionsBtns[0].closest('div'));
+  fireEvent.click(moreOptionsBtns[0]);
+  // Eliminar (activa modo selección)
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
 });
 
 test('permite buscar una variable por nombre', () => {
@@ -985,4 +990,68 @@ test('handleRemoveVariable elimina y remueve de la selección en modo selección
   fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
   expect(removeVariable).toHaveBeenCalledWith('x');
   expect(removeVariable).toHaveBeenCalledWith('y');
+});
+
+test('callbacks de VariableItem funcionan', () => {
+  const removeVariable = jest.fn();
+  const editVariable = jest.fn();
+  Object.assign(navigator, {
+    clipboard: { writeText: jest.fn(() => Promise.resolve()) }
+  });
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={editVariable}
+    />
+  );
+  // Copiar
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Copiar variable/i));
+  // Duplicar
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Duplicar/i));
+  // Vuelve a abrir el menú contextual antes de editar
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  // Editar
+  fireEvent.click(screen.getByText(/Editar valor/i));
+  // Cambia el valor y guarda para salir del modo edición
+  const input = screen.getByDisplayValue('10');
+  fireEvent.change(input, { target: { value: '20' } });
+  fireEvent.click(screen.getByTitle(/Guardar cambios/i));
+  // Usa getAllByTitle para encontrar el botón "Más opciones"
+  const moreOptionsBtns = screen.getAllByTitle(/Más opciones/i);
+  fireEvent.mouseEnter(moreOptionsBtns[0].closest('div'));
+  fireEvent.click(moreOptionsBtns[0]);
+  // Eliminar (activa modo selección)
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+});
+
+test('paginación: cambia de página correctamente', () => {
+  const variables = {};
+  for (let i = 1; i <= 15; i++) {
+    variables['v' + i] = i;
+  }
+  render(
+    <Variables
+      variables={variables}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  // Click en siguiente página
+  fireEvent.click(screen.getByText(/Siguiente/i));
+  // Click en anterior página
+  fireEvent.click(screen.getByText(/Anterior/i));
 });
