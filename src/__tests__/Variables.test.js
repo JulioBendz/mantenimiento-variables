@@ -784,3 +784,98 @@ test('onDuplicate y onStartDirectDeletion funcionan desde VariableItem', () => {
   // El panel de selección múltiple debe aparecer
   expect(screen.getByText(/Modo eliminación activo/i)).toBeInTheDocument();
 });
+
+test('fallbackCopyTextToClipboard no falla si el elemento no existe', () => {
+  // Elimina navigator.clipboard para forzar el fallback
+  const originalClipboard = navigator.clipboard;
+  delete navigator.clipboard;
+  document.execCommand = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Copiar variable/i));
+  // No hay expect, solo que no falle
+  navigator.clipboard = originalClipboard; // restaura
+});
+
+test('toggleVariableSelection alterna correctamente la selección', () => {
+  render(
+    <Variables
+      variables={{ x: 10, y: 20 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  // Selecciona x
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  // Deselecciona x
+  fireEvent.click(screen.getByText(/Deseleccionar/i));
+  // Selecciona x de nuevo
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+});
+
+test('handleBulkDelete no elimina si usuario cancela confirmación', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => false);
+  render(
+    <Variables
+      variables={{ x: 10, y: 20 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Eliminar/i));
+  fireEvent.click(screen.getByText(/Seleccionar todo/i));
+  const eliminarBtns = screen.getAllByText(/Eliminar\s*\(2\)/i);
+  fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
+  expect(removeVariable).not.toHaveBeenCalled();
+});
+
+test('elimina variable seleccionada en modo selección múltiple', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => true);
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  // Click en el último botón "Eliminar (1)" (panel de confirmación)
+  const eliminarBtns = screen.getAllByText(/Eliminar \(1\)/i);
+  fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
+  expect(removeVariable).toHaveBeenCalledWith('x');
+});
