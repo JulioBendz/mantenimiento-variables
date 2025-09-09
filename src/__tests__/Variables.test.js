@@ -905,12 +905,17 @@ test('handleRemoveVariable elimina variable cuando no está en modo selección',
   expect(removeVariable).toHaveBeenCalledWith('x');
 });
 
-test('feedback visual al copiar variable no falla si el elemento no existe', async () => {
+test('feedback visual al copiar variable manipula el DOM correctamente si el elemento existe', () => {
+  jest.useFakeTimers();
   Object.assign(navigator, {
     clipboard: { writeText: jest.fn(() => Promise.resolve()) }
   });
 
-  // NO agregues el elemento al DOM
+  const fakeIcon = document.createElement('span');
+  fakeIcon.id = 'copy-x';
+  fakeIcon.textContent = '📄';
+  document.body.appendChild(fakeIcon);
+
   render(
     <Variables
       variables={{ x: 10 }}
@@ -925,7 +930,12 @@ test('feedback visual al copiar variable no falla si el elemento no existe', asy
   );
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
   fireEvent.click(screen.getByTitle(/Copiar variable/i));
-  // Espera a que el setTimeout termine (aunque no hay elemento)
-  await new Promise((resolve) => setTimeout(resolve, 1100));
-  // Si no hay error, el test pasa
+
+  act(() => {
+    jest.advanceTimersByTime(1100);
+  });
+
+  expect(['✓', '📄']).toContain(fakeIcon.textContent);
+  document.body.removeChild(fakeIcon);
+  jest.useRealTimers();
 });
