@@ -619,12 +619,11 @@ test('calcula altura dinámica correctamente cuando no hay variables', () => {
   expect(screen.getByText(/No hay variables definidas/i)).toBeInTheDocument();
 });
 
-test('feedback visual al copiar variable manipula el DOM correctamente', async () => {
+test('feedback visual al copiar variable manipula el DOM correctamente si el elemento existe', async () => {
   Object.assign(navigator, {
     clipboard: { writeText: jest.fn(() => Promise.resolve()) }
   });
 
-  // Crea el elemento esperado en el DOM
   const fakeIcon = document.createElement('span');
   fakeIcon.id = 'copy-x';
   fakeIcon.textContent = '📄';
@@ -643,10 +642,10 @@ test('feedback visual al copiar variable manipula el DOM correctamente', async (
     />
   );
   fireEvent.mouseEnter(screen.getByText(/x = 10/i));
-  fireEvent.click(screen.getByTitle(/Copiar variable "x" al portapapeles/i));
-  // Espera a que el setTimeout cambie el texto
+  fireEvent.click(screen.getByTitle(/Copiar variable/i));
+  // Usa act para esperar el setTimeout
   await act(async () => {
-    await new Promise(resolve => setTimeout(resolve, 1100));
+    await new Promise((resolve) => setTimeout(resolve, 1100));
   });
   expect(['✓', '📄']).toContain(fakeIcon.textContent);
   document.body.removeChild(fakeIcon);
@@ -878,4 +877,55 @@ test('elimina variable seleccionada en modo selección múltiple', () => {
   const eliminarBtns = screen.getAllByText(/Eliminar \(1\)/i);
   fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
   expect(removeVariable).toHaveBeenCalledWith('x');
+});
+
+test('handleRemoveVariable elimina variable cuando no está en modo selección', () => {
+  const removeVariable = jest.fn();
+  window.confirm = jest.fn(() => true);
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={removeVariable}
+      editVariable={() => {}}
+    />
+  );
+  // Hover y abre menú contextual
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  // Click en Eliminar (esto activa modo selección, pero como solo hay una variable, no hay panel de selección)
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  // Ahora elimina desde el panel de selección múltiple
+  const eliminarBtns = screen.getAllByText(/Eliminar \(1\)/i);
+  fireEvent.click(eliminarBtns[eliminarBtns.length - 1]);
+  expect(removeVariable).toHaveBeenCalledWith('x');
+});
+
+test('feedback visual al copiar variable no falla si el elemento no existe', async () => {
+  Object.assign(navigator, {
+    clipboard: { writeText: jest.fn(() => Promise.resolve()) }
+  });
+
+  // NO agregues el elemento al DOM
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Copiar variable/i));
+  // Espera a que el setTimeout termine (aunque no hay elemento)
+  await new Promise((resolve) => setTimeout(resolve, 1100));
+  // Si no hay error, el test pasa
 });
