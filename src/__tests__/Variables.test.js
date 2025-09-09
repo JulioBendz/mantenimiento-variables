@@ -778,3 +778,49 @@ test('onDuplicate y onStartDirectDeletion funcionan desde VariableItem', () => {
   // El panel de selección múltiple debe aparecer
   expect(screen.getByText(/Modo eliminación activo/i)).toBeInTheDocument();
 });
+
+test('no guarda edición si el valor no es numérico', () => {
+  const editVariable = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={editVariable}
+    />
+  );
+  // Simula editar variable
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Editar valor/i));
+  const input = screen.getByDisplayValue('10');
+  fireEvent.change(input, { target: { value: 'abc' } });
+  fireEvent.click(screen.getByTitle(/Guardar cambios/i));
+  expect(editVariable).not.toHaveBeenCalled();
+});
+
+test('usa fallbackCopyTextToClipboard si navigator.clipboard no está disponible', () => {
+  const originalClipboard = navigator.clipboard;
+  delete navigator.clipboard;
+  document.execCommand = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Copiar variable/i));
+  expect(document.execCommand).toHaveBeenCalledWith('copy');
+  navigator.clipboard = originalClipboard; // restaurar
+});
