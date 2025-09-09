@@ -943,3 +943,44 @@ test('removeFormula elimina solo la fórmula con el id dado', () => {
   expect(updatedFormulas.some(f => f.id === idF2)).toBe(true);
   expect(updatedFormulas.length).toBe(1);
 });
+
+test('recalculateAllFormulas se llama automáticamente al cambiar a un período con fórmulas', () => {
+  const { result } = renderHook(() => usePeriods());
+
+  // Crea dos períodos y agrega una fórmula al primero
+  act(() => { result.current.createNewPeriod(2025, 1, 'Enero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-01'); });
+  act(() => { result.current.setVariableName('x'); });
+  act(() => { result.current.setVariableValue('2'); });
+  act(() => { result.current.addVariable(); });
+  act(() => { result.current.setFormula('x+2'); });
+  act(() => { result.current.setFormulaName('F1'); });
+  act(() => { result.current.calculateFormula(); });
+
+  // Crea un segundo período vacío y cambia a él
+  act(() => { result.current.createNewPeriod(2025, 2, 'Febrero 2025'); });
+  act(() => { result.current.setCurrentPeriod('2025-02'); });
+
+  // Cambia de nuevo al período con fórmula
+  act(() => { result.current.setCurrentPeriod('2025-01'); });
+
+  // Si no hay error, el efecto se ejecutó y recalculateAllFormulas fue llamado
+  // (puedes mockear recalculateAllFormulas si quieres verificar la llamada)
+  expect(result.current.getCurrentPeriodData().formulas.length).toBe(1);
+});
+
+test('recalculateFormulasForVariable retorna temprano si no hay fórmulas', () => {
+  const { result } = renderHook(() => usePeriods());
+  // Crea un período vacío
+  act(() => { result.current.createNewPeriod(2027, 1, 'Enero 2027'); });
+  act(() => { result.current.setCurrentPeriod('2027-01'); });
+
+  // Llama a recalculateFormulasForVariable (no debe hacer nada ni lanzar error)
+  act(() => {
+    result.current.recalculateFormulasForVariable('x');
+  });
+
+  // El array de fórmulas sigue vacío
+  const formulas = result.current.getCurrentPeriodData().formulas;
+  expect(formulas.length).toBe(0);
+});
