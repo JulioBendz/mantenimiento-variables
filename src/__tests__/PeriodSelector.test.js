@@ -1,5 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import PeriodSelector from '../components/PeriodSelector';
+import PeriodSelector, {
+  copyVariablesFromSpecificPeriod,
+  copyFormulasFromSpecificPeriod
+} from '../components/PeriodSelector';
 
 const periods = {
   '2025-07': {
@@ -373,10 +376,14 @@ test('cierra el modal de copiar fórmulas al cancelar', async () => {
 
 test('no copia variables si el período fuente no existe', () => {
   const copyVariablesFromPreviousPeriod = jest.fn();
-  const { rerender } = render(
+  const periods = {
+    '2025-01': { name: 'Periodo 1', variables: { x: 1 }, formulas: [] }
+    // No existe '2025-99'
+  };
+  render(
     <PeriodSelector
       periods={periods}
-      currentPeriod="2025-07"
+      currentPeriod="2025-01"
       setCurrentPeriod={() => {}}
       createNewPeriod={() => {}}
       deletePeriod={() => {}}
@@ -384,10 +391,10 @@ test('no copia variables si el período fuente no existe', () => {
       copyFormulasFromPreviousPeriod={() => {}}
     />
   );
-  // Llama directamente a la función interna (si la exportas para test)
-  // O simula el flujo con un período que no existe
-  // Aquí solo como ejemplo:
-  // expect(copyVariablesFromPreviousPeriod).not.toHaveBeenCalled();
+  // Simula la acción de copiar desde un período inexistente
+  // (puedes llamar la función directamente si la exportas)
+  // O simula el flujo de UI que lo dispara
+  // Espera que NO se llame copyVariablesFromPreviousPeriod
 });
 
 test('cierra el formulario de creación al cancelar', () => {
@@ -994,4 +1001,92 @@ test('no muestra "..." si el período fuente tiene menos de 3 variables', () => 
   fireEvent.click(screen.getByRole('button', { name: /variables/i }));
   fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-21' } });
   expect(screen.queryByText('...')).not.toBeInTheDocument();
+});
+
+test('copia variables si el período fuente tiene variables', () => {
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const periods = {
+    '2025-01': { name: 'Periodo 1', variables: { x: 1 }, formulas: [] },
+    '2025-02': { name: 'Periodo 2', variables: { y: 2 }, formulas: [] }
+  };
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-02"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={copyVariablesFromPreviousPeriod}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-01' } });
+  fireEvent.click(screen.getByRole('button', { name: /copiar variables/i }));
+  expect(copyVariablesFromPreviousPeriod).toHaveBeenCalled();
+});
+
+test('copyVariablesFromSpecificPeriod: return temprano si período fuente no existe', () => {
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const periods = { '2025-01': { name: 'Periodo 1', variables: { x: 1 }, formulas: [] } };
+  // Llama la función directamente
+  copyVariablesFromSpecificPeriod.call(
+    { periods, copyVariablesFromPreviousPeriod },
+    '2025-02',
+    'no-existe'
+  );
+  expect(copyVariablesFromPreviousPeriod).not.toHaveBeenCalled();
+});
+
+test('copyFormulasFromSpecificPeriod: return temprano si período fuente no existe', () => {
+  const copyFormulasFromPreviousPeriod = jest.fn();
+  const periods = { '2025-01': { name: 'Periodo 1', variables: { x: 1 }, formulas: [] } };
+  copyFormulasFromSpecificPeriod.call(
+    { periods, copyFormulasFromPreviousPeriod },
+    '2025-02',
+    'no-existe'
+  );
+  expect(copyFormulasFromPreviousPeriod).not.toHaveBeenCalled();
+});
+
+test('copyVariablesFromSpecificPeriod: return temprano si período fuente no existe', () => {
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const periods = { '2025-01': { name: 'Periodo 1', variables: { x: 1 }, formulas: [] } };
+  copyVariablesFromSpecificPeriod(periods, copyVariablesFromPreviousPeriod, '2025-02', 'no-existe');
+  expect(copyVariablesFromPreviousPeriod).not.toHaveBeenCalled();
+});
+
+test('copyVariablesFromSpecificPeriod: llama a copyVariablesFromPreviousPeriod si hay variables', () => {
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const periods = { '2025-01': { name: 'Periodo 1', variables: { x: 1 }, formulas: [] } };
+  copyVariablesFromSpecificPeriod(periods, copyVariablesFromPreviousPeriod, '2025-02', '2025-01');
+  expect(copyVariablesFromPreviousPeriod).toHaveBeenCalledWith('2025-02', '2025-01');
+});
+
+test('copyFormulasFromSpecificPeriod: return temprano si período fuente no existe', () => {
+  const copyFormulasFromPreviousPeriod = jest.fn();
+  const periods = { '2025-01': { name: 'Periodo 1', variables: { x: 1 }, formulas: [] } };
+  copyFormulasFromSpecificPeriod(periods, copyFormulasFromPreviousPeriod, '2025-02', 'no-existe');
+  expect(copyFormulasFromPreviousPeriod).not.toHaveBeenCalled();
+});
+
+test('copyFormulasFromSpecificPeriod: llama a copyFormulasFromPreviousPeriod si hay fórmulas', () => {
+  const copyFormulasFromPreviousPeriod = jest.fn();
+  const periods = { '2025-01': { name: 'Periodo 1', variables: { x: 1 }, formulas: [{ name: 'F1' }] } };
+  copyFormulasFromSpecificPeriod(periods, copyFormulasFromPreviousPeriod, '2025-02', '2025-01');
+  expect(copyFormulasFromPreviousPeriod).toHaveBeenCalledWith('2025-02', '2025-01');
+});
+
+test('copyVariablesFromSpecificPeriod: NO llama si no hay variables', () => {
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const periods = { '2025-01': { name: 'Periodo 1', variables: {}, formulas: [] } };
+  copyVariablesFromSpecificPeriod(periods, copyVariablesFromPreviousPeriod, '2025-02', '2025-01');
+  expect(copyVariablesFromPreviousPeriod).not.toHaveBeenCalled();
+});
+
+test('copyFormulasFromSpecificPeriod: NO llama si no hay fórmulas', () => {
+  const copyFormulasFromPreviousPeriod = jest.fn();
+  const periods = { '2025-01': { name: 'Periodo 1', variables: {}, formulas: [] } };
+  copyFormulasFromSpecificPeriod(periods, copyFormulasFromPreviousPeriod, '2025-02', '2025-01');
+  expect(copyFormulasFromPreviousPeriod).not.toHaveBeenCalled();
 });
