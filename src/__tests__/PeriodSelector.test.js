@@ -743,36 +743,6 @@ test('muestra "Sin seleccionar" si no hay período actual', () => {
   expect(screen.getByText(/Sin seleccionar/i)).toBeInTheDocument();
 });
 
-test('muestra "más..." si hay más de 5 variables al copiar', () => {
-  render(<PeriodSelector
-    periods={periods}
-    currentPeriod="2025-08"
-    setCurrentPeriod={() => {}}
-    createNewPeriod={() => {}}
-    deletePeriod={() => {}}
-    copyVariablesFromPreviousPeriod={() => {}}
-    copyFormulasFromPreviousPeriod={() => {}}
-  />);
-  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
-  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-07' } });
-  expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
-});
-
-test('muestra "más..." si hay más de 3 fórmulas al copiar', () => {
-  render(<PeriodSelector
-    periods={periods}
-    currentPeriod="2025-08"
-    setCurrentPeriod={() => {}}
-    createNewPeriod={() => {}}
-    deletePeriod={() => {}}
-    copyVariablesFromPreviousPeriod={() => {}}
-    copyFormulasFromPreviousPeriod={() => {}}
-  />);
-  fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
-  fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '2025-07' } });
-  expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
-});
-
 test('muestra mensaje si no hay períodos', () => {
   render(<PeriodSelector
     periods={{}}
@@ -784,4 +754,25 @@ test('muestra mensaje si no hay períodos', () => {
     copyFormulasFromPreviousPeriod={() => {}}
   />);
   expect(screen.getByText(/no hay períodos/i)).toBeInTheDocument();
+});
+
+test('muestra mensaje si el período fuente no tiene variables', () => {
+  const periodsSinVars = {
+    ...periods,
+    '2025-09': { name: 'Periodo 3', variables: {}, formulas: [] }
+  };
+  render(
+    <PeriodSelector
+      periods={periodsSinVars}
+      currentPeriod="2025-08"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-09' } });
+  expect(screen.getByText(/no hay variables en este período/i)).toBeInTheDocument();
 });
