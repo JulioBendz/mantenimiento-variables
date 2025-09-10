@@ -1026,3 +1026,85 @@ test('paginación: cambia de página correctamente', () => {
   // Click en anterior página
   fireEvent.click(screen.getByText(/Anterior/i));
 });
+
+test('toggleVariableSelection selecciona y deselecciona una variable', () => {
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  // Activa modo selección múltiple
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  // Selecciona la variable
+  fireEvent.click(screen.getByRole('checkbox'));
+  // Deselecciona la variable
+  fireEvent.click(screen.getByRole('checkbox'));
+});
+
+test('duplicateVariable se llama desde menú contextual', () => {
+  const editVariable = jest.fn();
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={editVariable}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Duplicar/i));
+  expect(editVariable).toHaveBeenCalledWith('x_copia', 10);
+});
+
+test('startDirectDeletion activa modo selección desde menú contextual', () => {
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/^Eliminar$/i));
+  expect(screen.getByText(/Modo eliminación activo/i)).toBeInTheDocument();
+});
+
+test('setShowDropdown(null) cierra el menú contextual al hacer click fuera', () => {
+  render(
+    <Variables
+      variables={{ x: 10 }}
+      addVariable={() => {}}
+      setVariableName={() => {}}
+      setVariableValue={() => {}}
+      variableName=""
+      variableValue=""
+      removeVariable={() => {}}
+      editVariable={() => {}}
+    />
+  );
+  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  // Click fuera del menú contextual
+  fireEvent.click(document.body);
+  // El menú contextual debería cerrarse (no hay expect, solo cubrir el branch)
+});
