@@ -609,3 +609,47 @@ test('no copia fórmulas si el período fuente no existe (branch)', () => {
   // El botón debe estar deshabilitado
   expect(screen.getByRole('button', { name: /copiar fórmulas/i })).toBeDisabled();
 });
+
+test('no copia variables si el período fuente tiene variables undefined', () => {
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const periodsSinVars = {
+    ...periods,
+    '2025-09': { name: 'Periodo 3' } // variables: undefined
+  };
+  render(
+    <PeriodSelector
+      periods={periodsSinVars}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={copyVariablesFromPreviousPeriod}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-09' } });
+  expect(screen.getByRole('button', { name: /copiar variables/i })).toBeDisabled();
+});
+
+test('no copia fórmulas si el período fuente tiene formulas undefined', () => {
+  const copyFormulasFromPreviousPeriod = jest.fn();
+  const periodsSinFormulas = {
+    ...periods,
+    '2025-09': { name: 'Periodo 3', variables: { z: 3 } } // formulas: undefined
+  };
+  render(
+    <PeriodSelector
+      periods={periodsSinFormulas}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={copyFormulasFromPreviousPeriod}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
+  fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '2025-09' } });
+  expect(screen.getByRole('button', { name: /copiar fórmulas/i })).toBeDisabled();
+});
