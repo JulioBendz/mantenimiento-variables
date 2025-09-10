@@ -570,6 +570,15 @@ function PeriodSelector({
           </span>
         </div>
       </div>
+
+      {/* Mensaje si no hay períodos disponibles */}
+      {sortedPeriods.length === 0 && (
+        <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+          <div className="text-sm text-red-800">
+            ⚠️ No hay períodos disponibles. Crea un nuevo período para comenzar.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
