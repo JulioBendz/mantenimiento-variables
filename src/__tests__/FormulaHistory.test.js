@@ -267,6 +267,28 @@ test('ajusta los filtros de porcentaje si los valores son inválidos', () => {
   expect(screen.getAllByText(/100%/).length).toBeGreaterThan(0);
 });
 
+test('ajusta los filtros de porcentaje si los valores son negativos', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.click(screen.getByTitle(/Editar rangos/i));
+  const inputs = screen.getAllByRole('spinbutton');
+  // excellentMin < 0
+  fireEvent.change(inputs[0], { target: { value: -10 } });
+  // acceptableMin < 0
+  fireEvent.change(inputs[1], { target: { value: -5 } });
+  fireEvent.click(screen.getByText(/Guardar/i));
+  // El componente debe ajustar los valores automáticamente a 0
+  expect(screen.getAllByText(/0%/).length).toBeGreaterThan(0);
+});
+
 test('permite limpiar la búsqueda', () => {
   render(
     <FormulaHistory
