@@ -772,3 +772,16 @@ test('muestra "más..." si hay más de 3 fórmulas al copiar', () => {
   fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '2025-07' } });
   expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
 });
+
+test('muestra mensaje si no hay períodos', () => {
+  render(<PeriodSelector
+    periods={{}}
+    currentPeriod=""
+    setCurrentPeriod={() => {}}
+    createNewPeriod={() => {}}
+    deletePeriod={() => {}}
+    copyVariablesFromPreviousPeriod={() => {}}
+    copyFormulasFromPreviousPeriod={() => {}}
+  />);
+  expect(screen.getByText(/no hay períodos/i)).toBeInTheDocument();
+});
