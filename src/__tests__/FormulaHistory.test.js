@@ -605,3 +605,21 @@ test('al eliminar una fórmula en modo selección, la remueve también de la sel
 
   window.confirm.mockRestore();
 });
+
+const handleRemoveFormula = (formulaEntry) => {
+  const confirmDelete = window.confirm(
+    `¿Estás seguro de que quieres eliminar la fórmula "${formulaEntry.name}"?\n\nFórmula: ${formulaEntry.originalFormula}\nResultado: ${formulaEntry.result}\n\nEsta acción no se puede deshacer.`
+  );
+  
+  if (confirmDelete) {
+    removeFormula(formulaEntry.id);
+    if (isSelectionMode) {
+      setSelectedFormulas(prev => {
+        const newSelection = new Set(prev);
+        newSelection.delete(formulaEntry.id);
+        return newSelection;
+      });
+    }
+  }
+  setShowDropdown(null);
+};
