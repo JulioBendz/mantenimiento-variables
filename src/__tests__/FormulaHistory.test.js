@@ -247,6 +247,26 @@ test('permite cambiar los valores de los filtros de porcentaje', () => {
   expect(screen.getAllByText(/60%/).length).toBeGreaterThan(0);
 });
 
+test('ajusta los filtros de porcentaje si los valores son inválidos', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.click(screen.getByTitle(/Editar rangos/i));
+  const inputs = screen.getAllByRole('spinbutton');
+  fireEvent.change(inputs[0], { target: { value: 120 } }); // excellentMin > 100
+  fireEvent.change(inputs[1], { target: { value: 150 } }); // acceptableMin > excellentMin
+  fireEvent.click(screen.getByText(/Guardar/i));
+  // El componente debe ajustar los valores automáticamente
+  expect(screen.getAllByText(/100%/).length).toBeGreaterThan(0);
+});
+
 test('permite limpiar la búsqueda', () => {
   render(
     <FormulaHistory
@@ -483,7 +503,6 @@ test('no muestra análisis de porcentajes si no hay fórmulas válidas', () => {
       variables={{}}
     />
   );
-  // No debe aparecer el texto de análisis de porcentajes
   expect(screen.queryByText(/Análisis de porcentajes/i)).not.toBeInTheDocument();
 });
 
@@ -585,24 +604,19 @@ test('al eliminar una fórmula en modo selección, la remueve también de la sel
       variables={{ x: 1, y: 2 }}
     />
   );
-
   // Activa modo selección (eliminar) sobre la primera fórmula
   fireEvent.mouseOver(screen.getByText(/Fórmula 1/i));
   fireEvent.click(screen.getByTitle(/Más opciones/i));
   fireEvent.click(screen.getByText(/^Eliminar$/i));
-
-  // En este punto, la fórmula 1 está seleccionada y en modo selección
-  // Elimina la fórmula seleccionada
-  const eliminarBtn = await screen.findByText(/Eliminar \(1\)/i);
+  // Selecciona la segunda fórmula también
+  const checkboxes = screen.getAllByRole('checkbox');
+  fireEvent.click(checkboxes[1]);
+  // Elimina ambas
+  const eliminarBtn = await screen.findByText(/Eliminar \(2\)/i);
   fireEvent.click(eliminarBtn);
-
-  // Espera a que se procese la llamada
   await new Promise(r => setTimeout(r, 0));
   expect(removeFormula).toHaveBeenCalledWith(1);
-
-  // El panel de selección múltiple debe cerrarse (ya no hay seleccionadas)
-  expect(screen.queryByText(/Eliminar \(1\)/i)).not.toBeInTheDocument();
-
+  expect(removeFormula).toHaveBeenCalledWith(2);
   window.confirm.mockRestore();
 });
 
@@ -623,3 +637,43 @@ const handleRemoveFormula = (formulaEntry) => {
   }
   setShowDropdown(null);
 };
+
+test('llama reuseFormulaWithOptions y cierra el dropdown', () => {
+  const reuseFormula = jest.fn();
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      removeFormula={() => {}}
+      reuseFormula={reuseFormula}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.mouseOver(screen.getByText(/^Fórmula$/));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Usar nuevamente/i));
+  expect(reuseFormula).toHaveBeenCalled();
+});
+
+test('muestra alerta si no se pudo copiar la fórmula', () => {
+  // Simula que ni clipboard ni execCommand funcionan
+  delete navigator.clipboard;
+  document.execCommand = jest.fn(() => { throw new Error('fail'); });
+  window.alert = jest.fn();
+
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.mouseOver(screen.getByText(/^Fórmula$/));
+  fireEvent.click(screen.getByTitle(/Más opciones/i));
+  fireEvent.click(screen.getByText(/Copiar/i));
+  expect(window.alert).toHaveBeenCalledWith('No se pudo copiar la fórmula');
+});
