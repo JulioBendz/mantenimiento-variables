@@ -213,7 +213,7 @@ test('permite cancelar la edición del nombre', () => {
 test('permite abrir y cerrar la edición de filtros de porcentaje', () => {
   render(
     <FormulaHistory
-      savedFormulas={[{ id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }]}
+      savedFormulas={[{ id: 1, originalFormula: 'x+1', result: 2 }]}
       removeFormula={() => {}}
       reuseFormula={() => {}}
       editFormulaName={() => {}}
@@ -230,7 +230,7 @@ test('permite abrir y cerrar la edición de filtros de porcentaje', () => {
 test('permite cambiar los valores de los filtros de porcentaje', () => {
   render(
     <FormulaHistory
-      savedFormulas={[{ id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: 2 }]}
+      savedFormulas={[{ id: 1, originalFormula: 'x+1', result: 2 }]}
       removeFormula={() => {}}
       reuseFormula={() => {}}
       editFormulaName={() => {}}
@@ -434,7 +434,7 @@ test('permite seleccionar y deseleccionar todas las fórmulas', async () => {
 test('getUsedVariables retorna "Ninguna" si variables es inválido', () => {
   render(
     <FormulaHistory
-      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      savedFormulas={[{ id: 1, originalFormula: 'x', result: 1 }]}
       removeFormula={() => {}}
       reuseFormula={() => {}}
       editFormulaName={() => {}}
@@ -479,7 +479,7 @@ test('getUsedVariables retorna error si ocurre excepción', () => {
   });
   render(
     <FormulaHistory
-      savedFormulas={[{ id: 1, name: 'Fórmula', originalFormula: 'x', result: 1 }]}
+      savedFormulas={[{ id: 1, originalFormula: 'x', result: 1 }]}
       removeFormula={() => {}}
       reuseFormula={() => {}}
       editFormulaName={() => {}}
@@ -589,7 +589,7 @@ test('cierra el menú contextual aunque el usuario cancele la eliminación', asy
   window.confirm.mockRestore();
 });
 
-test('al eliminar una fórmula seleccionada, se actualiza la selección correctamente', async () => {
+test('al eliminar una fórmula en modo selección, actualiza la selección y el panel sigue abierto si quedan seleccionadas', async () => {
   const removeFormula = jest.fn();
   jest.spyOn(window, 'confirm').mockImplementation(() => true);
 
@@ -612,18 +612,19 @@ test('al eliminar una fórmula seleccionada, se actualiza la selección correcta
   fireEvent.click(screen.getByTitle(/Más opciones/i));
   fireEvent.click(screen.getByText(/^Eliminar$/i));
 
-  // Selecciona ambas fórmulas (si tu UI lo permite)
-  const checkboxes = screen.getAllByRole('checkbox');
-  fireEvent.click(checkboxes[0]);
-  fireEvent.click(checkboxes[1]);
+  // Selecciona ambas fórmulas
+  fireEvent.click(screen.getAllByRole('checkbox')[1]); // Selecciona la segunda
 
-  // Busca el botón "Eliminar (1)" o "Eliminar (2)" según lo que muestre tu UI
-  const eliminarBtn = await screen.findByText(/Eliminar \(\d+\)/i);
+  // Elimina ambas
+  const eliminarBtn = await screen.findByText(/Eliminar \(2\)/i);
   fireEvent.click(eliminarBtn);
 
   await new Promise(r => setTimeout(r, 0));
-  // Verifica que se llamó a removeFormula al menos una vez
-  expect(removeFormula).toHaveBeenCalled();
+  expect(removeFormula).toHaveBeenCalledWith(1);
+  expect(removeFormula).toHaveBeenCalledWith(2);
+
+  // El panel de selección múltiple debe desaparecer (no hay seleccionadas)
+  expect(screen.queryByText(/Eliminar \(\d+\)/i)).not.toBeInTheDocument();
 
   window.confirm.mockRestore();
 });
@@ -683,4 +684,48 @@ test('no muestra análisis de porcentajes si todas las fórmulas tienen resultad
     />
   );
   expect(screen.queryByText(/Análisis de porcentajes/i)).not.toBeInTheDocument();
+});
+
+test('filtra correctamente si formula.name es undefined', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, originalFormula: 'x+1', result: 2 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.change(screen.getByPlaceholderText(/Buscar fórmula/i), { target: { value: 'x+1' } });
+  expect(screen.getByText(/x\+1/i)).toBeInTheDocument();
+});
+
+test('filtra correctamente si formula.originalFormula es undefined', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[{ id: 1, name: 'Fórmula 1', result: 2 }]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  fireEvent.change(screen.getByPlaceholderText(/Buscar fórmula/i), { target: { value: 'Fórmula 1' } });
+  expect(screen.getByText(/Fórmula 1/i)).toBeInTheDocument();
+});
+
+test('no rompe si savedFormulas es undefined', () => {
+  render(
+    <FormulaHistory
+      // No pasamos savedFormulas
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1 }}
+    />
+  );
+  expect(screen.getByText(/No hay fórmulas calculadas/i)).toBeInTheDocument();
 });
