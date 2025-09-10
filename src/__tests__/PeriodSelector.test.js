@@ -730,6 +730,56 @@ test('muestra "más..." si hay más de 3 fórmulas al copiar', () => {
   expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
 });
 
+test('no muestra "más..." si el período fuente tiene exactamente 3 variables', () => {
+  const periods3Vars = {
+    ...periods,
+    '2025-13': {
+      name: 'Periodo 7',
+      variables: { a: 1, b: 2, c: 3 },
+      formulas: []
+    }
+  };
+  render(
+    <PeriodSelector
+      periods={periods3Vars}
+      currentPeriod="2025-08"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-13' } });
+  expect(screen.queryByText('...')).not.toBeInTheDocument();
+});
+
+test('no muestra "más..." si el período fuente tiene exactamente 5 variables', () => {
+  const periods5Vars = {
+    ...periods,
+    '2025-14': {
+      name: 'Periodo 8',
+      variables: { a: 1, b: 2, c: 3, d: 4, e: 5 },
+      formulas: []
+    }
+  };
+  render(
+    <PeriodSelector
+      periods={periods5Vars}
+      currentPeriod="2025-08"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-14' } });
+  expect(screen.queryByText(/más.../i)).not.toBeInTheDocument();
+});
+
 test('muestra "Sin seleccionar" si no hay período actual', () => {
   render(<PeriodSelector
     periods={{}}
@@ -860,4 +910,88 @@ test('muestra los nombres de hasta 3 fórmulas y "más..." si hay más', () => {
   expect(screen.getByText(/F1, F2, F3/)).toBeInTheDocument();
   // Y debe mostrar "y 1 más..." por la cuarta fórmula
   expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
+});
+
+test('no muestra "más..." si el período fuente tiene exactamente 3 fórmulas', () => {
+  const periods3Formulas = {
+    ...periods,
+    '2025-15': {
+      name: 'Periodo 9',
+      variables: {},
+      formulas: [
+        { name: 'F1' }, { name: 'F2' }, { name: 'F3' }
+      ]
+    }
+  };
+  render(
+    <PeriodSelector
+      periods={periods3Formulas}
+      currentPeriod="2025-08"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
+  fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '2025-15' } });
+  expect(screen.queryByText(/más.../i)).not.toBeInTheDocument();
+});
+
+test('muestra 0 variables si variables es undefined', () => {
+  const periodsSinVars = {
+    '2025-20': { name: 'Periodo sin vars' } // variables: undefined
+  };
+  render(
+    <PeriodSelector
+      periods={periodsSinVars}
+      currentPeriod="2025-20"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  expect(screen.getByText(/0 variables/i)).toBeInTheDocument();
+});
+
+test('muestra 0 fórmulas si formulas es undefined', () => {
+  const periodsSinFormulas = {
+    '2025-22': { name: 'Periodo sin formulas', variables: { x: 1 } }
+  };
+  render(
+    <PeriodSelector
+      periods={periodsSinFormulas}
+      currentPeriod="2025-22"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  expect(screen.getByText(/0 fórmulas/i)).toBeInTheDocument();
+});
+
+test('no muestra "..." si el período fuente tiene menos de 3 variables', () => {
+  const periods2Vars = {
+    '2025-21': { name: 'Periodo 2 vars', variables: { a: 1, b: 2 }, formulas: [] },
+    '2025-22': { name: 'Otro', variables: { x: 1 }, formulas: [] }
+  };
+  render(
+    <PeriodSelector
+      periods={periods2Vars}
+      currentPeriod="2025-22"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-21' } });
+  expect(screen.queryByText('...')).not.toBeInTheDocument();
 });
