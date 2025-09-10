@@ -776,3 +776,88 @@ test('muestra mensaje si el período fuente no tiene variables', () => {
   fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-09' } });
   expect(screen.getByText(/no hay variables en este período/i)).toBeInTheDocument();
 });
+
+test('muestra "..." si el período fuente tiene más de 2 fórmulas', () => {
+  const periodsMasF2 = {
+    ...periods,
+    '2025-10': {
+      name: 'Periodo 4',
+      variables: { x: 1 },
+      formulas: [
+        { name: 'F1' }, { name: 'F2' }, { name: 'F3' }, { name: 'F4' }
+      ]
+    }
+  };
+  render(
+    <PeriodSelector
+      periods={periodsMasF2}
+      currentPeriod="2025-08"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
+  fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '2025-10' } });
+  expect(screen.getByText(/y 1 más\.\.\./i)).toBeInTheDocument();
+});
+
+test('muestra los nombres de hasta 5 variables al copiar', () => {
+  const periods5Vars = {
+    ...periods,
+    '2025-11': {
+      name: 'Periodo 5',
+      variables: { a:1, b:2, c:3, d:4, e:5, f:6 },
+      formulas: []
+    }
+  };
+  render(
+    <PeriodSelector
+      periods={periods5Vars}
+      currentPeriod="2025-08"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-11' } });
+  // Debe mostrar los nombres de las primeras 5 variables
+  expect(screen.getByText(/a, b, c, d, e/)).toBeInTheDocument();
+  // Y debe mostrar "y 1 más..." por la sexta variable
+  expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
+});
+
+test('muestra los nombres de hasta 3 fórmulas y "más..." si hay más', () => {
+  const periods4Formulas = {
+    ...periods,
+    '2025-12': {
+      name: 'Periodo 6',
+      variables: {},
+      formulas: [
+        { name: 'F1' }, { name: 'F2' }, { name: 'F3' }, { name: 'F4' }
+      ]
+    }
+  };
+  render(
+    <PeriodSelector
+      periods={periods4Formulas}
+      currentPeriod="2025-08"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
+  fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '2025-12' } });
+  // Debe mostrar los nombres de las primeras 3 fórmulas
+  expect(screen.getByText(/F1, F2, F3/)).toBeInTheDocument();
+  // Y debe mostrar "y 1 más..." por la cuarta fórmula
+  expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
+});
