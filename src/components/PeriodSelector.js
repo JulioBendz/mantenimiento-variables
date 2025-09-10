@@ -96,10 +96,6 @@ function PeriodSelector({
 
   // Función para copiar variables con modal de selección
   const handleCopyVariablesWithModal = () => {
-    if (!selectedSourceForVariables) {
-      alert('Selecciona un período fuente para copiar variables');
-      return;
-    }
     
     copyVariablesFromSpecificPeriod(currentPeriod, selectedSourceForVariables);
     setShowVariablesModal(false);
@@ -108,10 +104,6 @@ function PeriodSelector({
 
   // Función para copiar fórmulas con modal de selección
   const handleCopyFormulasWithModal = () => {
-    if (!selectedSourceForFormulas) {
-      alert('Selecciona un período fuente para copiar fórmulas');
-      return;
-    }
     
     copyFormulasFromSpecificPeriod(currentPeriod, selectedSourceForFormulas);
     setShowFormulasModal(false);
