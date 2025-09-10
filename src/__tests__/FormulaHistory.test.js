@@ -361,9 +361,11 @@ test('restaura los filtros de porcentaje desde localStorage', () => {
   localStorage.removeItem('acceptableMin');
 });
 
-test('usa fallback para copiar al portapapeles si navigator.clipboard no existe', () => {
-  const originalClipboard = navigator.clipboard;
-  delete navigator.clipboard;
+test('usa fallback para copiar al portapapeles si navigator.clipboard.writeText falla', async () => {
+  // Simula que clipboard existe pero falla
+  navigator.clipboard = {
+    writeText: jest.fn(() => Promise.reject())
+  };
   document.execCommand = jest.fn();
   window.alert = jest.fn();
 
@@ -377,12 +379,12 @@ test('usa fallback para copiar al portapapeles si navigator.clipboard no existe'
       variables={{ x: 1 }}
     />
   );
-  // Selecciona el nombre exacto de la fórmula para evitar ambigüedad
   fireEvent.mouseOver(screen.getByText(/^Fórmula$/));
   fireEvent.click(screen.getByTitle(/Más opciones/i));
   fireEvent.click(screen.getByText(/Copiar/i));
+  // Espera a que la promesa falle y el fallback sea llamado
+  await new Promise(r => setTimeout(r, 0));
   expect(document.execCommand).toHaveBeenCalledWith('copy');
-  navigator.clipboard = originalClipboard;
 });
 
 test('permite cancelar la selección múltiple', async () => {
@@ -676,4 +678,21 @@ test('muestra alerta si no se pudo copiar la fórmula', () => {
   fireEvent.click(screen.getByTitle(/Más opciones/i));
   fireEvent.click(screen.getByText(/Copiar/i));
   expect(window.alert).toHaveBeenCalledWith('No se pudo copiar la fórmula');
+});
+
+test('no muestra análisis de porcentajes si todas las fórmulas tienen resultado null', () => {
+  render(
+    <FormulaHistory
+      savedFormulas={[
+        { id: 1, name: 'Fórmula 1', originalFormula: 'x+1', result: null },
+        { id: 2, name: 'Fórmula 2', originalFormula: 'y+2', result: undefined }
+      ]}
+      removeFormula={() => {}}
+      reuseFormula={() => {}}
+      editFormulaName={() => {}}
+      currentPeriod="Periodo"
+      variables={{ x: 1, y: 2 }}
+    />
+  );
+  expect(screen.queryByText(/Análisis de porcentajes/i)).not.toBeInTheDocument();
 });
