@@ -498,3 +498,72 @@ test('no permite seleccionar un período fuente inexistente en el modal de copia
   expect(select.value).toBe('');
   expect(screen.getByRole('button', { name: /copiar variables/i })).toBeDisabled();
 });
+
+test('crea un nuevo período correctamente y copia datos si corresponde', () => {
+  jest.useFakeTimers(); // <-- Activa fake timers
+
+  const createNewPeriod = jest.fn();
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const copyFormulasFromPreviousPeriod = jest.fn();
+
+  render(
+    <PeriodSelector
+      periods={{
+        '2025-07': { name: 'Periodo 1', variables: { x: 1 }, formulas: [{ name: 'F1' }] }
+      }}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={createNewPeriod}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={copyVariablesFromPreviousPeriod}
+      copyFormulasFromPreviousPeriod={copyFormulasFromPreviousPeriod}
+    />
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: /\+ nuevo período/i }));
+  fireEvent.change(screen.getByLabelText(/año/i), { target: { value: 2026 } });
+  fireEvent.change(screen.getByLabelText(/mes/i), { target: { value: 8 } });
+
+  // Busca el select correcto para "copiar desde"
+  const selects = screen.getAllByRole('combobox');
+  const copiarDesdeSelect = selects.find(
+    sel => Array.from(sel.options).some(opt => opt.textContent?.match(/Periodo 1/))
+  );
+  fireEvent.change(copiarDesdeSelect, { target: { value: '2025-07' } });
+
+  // Marca ambos checkboxes (ya están marcados por defecto, pero asegúrate)
+  const varCheckbox = screen.getByLabelText(/copiar variables/i);
+  const formCheckbox = screen.getByLabelText(/copiar fórmulas/i);
+  if (!varCheckbox.checked) fireEvent.click(varCheckbox);
+  if (!formCheckbox.checked) fireEvent.click(formCheckbox);
+
+  fireEvent.click(screen.getByRole('button', { name: /crear/i }));
+
+  expect(createNewPeriod).toHaveBeenCalledWith(2026, 8, expect.any(String));
+
+  // Si tu lógica usa setTimeout para copiar, avanza los timers:
+  jest.runAllTimers();
+
+  expect(copyVariablesFromPreviousPeriod).toHaveBeenCalled();
+  expect(copyFormulasFromPreviousPeriod).toHaveBeenCalled();
+
+  jest.useRealTimers(); // <-- Limpia fake timers
+});
+
+test('cubre el return temprano del useEffect de showCreateForm', () => {
+  render(
+    <PeriodSelector
+      periods={periods}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  // El formulario no está abierto, el useEffect retorna temprano
+  // Ahora ábrelo y ciérralo para cubrir ambos caminos
+  fireEvent.click(screen.getByRole('button', { name: /\+ nuevo período/i }));
+  fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
+});
