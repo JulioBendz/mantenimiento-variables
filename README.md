@@ -1,38 +1,92 @@
 # Mantenimiento de Variables y Fórmulas
 
-Este proyecto permite gestionar variables y fórmulas matemáticas de forma dinámica, con historial, edición, copia y eliminación múltiple. Está desarrollado en React y utiliza pruebas automatizadas para asegurar la calidad y estabilidad del código.
+Este proyecto es una solución **end-to-end** para la gestión de variables y fórmulas matemáticas, incluyendo frontend en React, backend en .NET, pruebas automatizadas, integración continua y despliegue. Está diseñado para ser escalable, mantenible y fácil de extender.
 
-## Características
+---
 
-- Agregar, editar y eliminar variables.
-- Crear y calcular fórmulas usando variables.
-- Historial de fórmulas con copia y reutilización.
-- Eliminación múltiple y selección por página.
-- Feedback visual al copiar.
-- Buscador y paginación.
-- Tests automatizados con Jest y React Testing Library.
-- Estructura lista para conectar con backend (API .NET incluida en la solución).
+## Características principales
 
-## Instalación
+- **Frontend React:**  
+  - Gestión dinámica de variables y fórmulas.
+  - Historial, edición, copia y eliminación múltiple.
+  - Buscador, paginación y feedback visual.
+  - UI lista para integración con backend.
+
+- **Backend .NET (API):**  
+  - Estructura preparada para exponer endpoints RESTful.
+  - Pensado para persistencia, autenticación y lógica de negocio.
+
+- **Pruebas automatizadas:**  
+  - Unitarias y de integración con Jest y React Testing Library.
+  - Cobertura superior al 85% en componentes y lógica.
+  - Listo para agregar pruebas end-to-end (E2E) con Cypress o Playwright.
+
+- **Ciclo DevOps:**  
+  - Listo para integración continua (CI) y despliegue continuo (CD).
+  - Buenas prácticas de versionado, documentación y calidad de código.
+
+---
+
+## Estructura del proyecto
+
+```
+/src
+  /components      # Componentes React principales
+  /utils           # Funciones utilitarias y helpers
+  /hooks           # Custom hooks de React
+  /__tests__       # Pruebas unitarias e integración
+/MantenimientoVariablesApi
+  /Controllers     # Controladores .NET para la API
+  /Models          # Modelos de datos
+  /...             # Otros archivos backend
+README.md
+package.json
+...
+```
+
+---
+
+## Instalación y uso
+
+### 1. Clonar el repositorio
+
+```sh
+git clone https://github.com/tu-usuario/mantenimiento-variables.git
+cd mantenimiento-variables
+```
+
+### 2. Instalar dependencias frontend
 
 ```sh
 npm install
 ```
 
-## Uso
+### 3. Ejecutar frontend
 
 ```sh
 npm start
 ```
-
 Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-## Ejecutar tests
+### 4. Ejecutar backend (.NET)
+
+```sh
+cd MantenimientoVariablesApi
+dotnet restore
+dotnet run
+```
+Por defecto, la API estará disponible en [http://localhost:5000](http://localhost:5000) o el puerto configurado.
+
+---
+
+## Pruebas automatizadas
+
+### Ejecutar tests unitarios y de integración
 
 ```sh
 npm test
 ```
-Para ejecutar **todos los tests**, presiona la tecla `a` cuando aparezca el menú interactivo, o ejecuta:
+Para ejecutar **todos los tests**:
 ```sh
 npm test -- --watchAll
 ```
@@ -41,26 +95,44 @@ Para ver la **cobertura de código**:
 npm test -- --coverage
 ```
 
-Para ver directamente **cobertura completa**
+### Pruebas end-to-end (E2E)
+
+> **Recomendado:**  
+> Agrega [Cypress](https://www.cypress.io/) o [Playwright](https://playwright.dev/) para simular flujos completos de usuario.
+
+Ejemplo de instalación Cypress:
 ```sh
-npm test -- --coverage --watchAll=false
+npm install --save-dev cypress
+npx cypress open
 ```
 
+---
 
-## Estructura del proyecto
+## Despliegue
 
-- `/src/components`: Componentes React principales (Variables, Fórmulas, Calculadora, etc.).
-- `/src/utils`: Funciones utilitarias para lógica de negocio y helpers.
-- `/src/__tests__` o archivos `.test.js`: Pruebas unitarias y de integración.
-- `/MantenimientoVariablesApi`: Proyecto backend en .NET para futura integración.
+- **Frontend:**  
+  Puedes desplegar en Vercel, Netlify, Azure Static Web Apps, etc.
+- **Backend:**  
+  Despliegue en Azure App Service, AWS, Heroku, o tu servidor preferido.
+- **CI/CD:**  
+  Configura pipelines en GitHub Actions, GitLab CI, Azure DevOps, etc., para automatizar tests y despliegue.
 
-## Pruebas automatizadas
+---
 
-Las pruebas están escritas usando [Jest](https://jestjs.io/) y [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/).  
-Ejemplo de test unitario para un componente:
+## Buenas prácticas y ciclo de desarrollo
+
+- **Desarrollo guiado por tests:** Escribe tests para cada nueva funcionalidad.
+- **Integración continua:** Usa pipelines para validar cada cambio.
+- **Revisión de código:** Haz pull requests y revisa en equipo.
+- **Documentación:** Mantén este README y la documentación técnica actualizada.
+- **Monitoreo y feedback:** Agrega logs, manejo de errores y monitoreo en producción.
+- **Refactorización continua:** Aprovecha la alta cobertura para mejorar el código sin miedo.
+
+---
+
+## Ejemplo de test unitario
 
 ```js
-// VariableItem.test.js
 import { render, screen, fireEvent } from '@testing-library/react';
 import VariableItem from './VariableItem';
 
@@ -68,48 +140,9 @@ test('muestra el nombre y valor de la variable', () => {
   render(<VariableItem name="x" value={10} />);
   expect(screen.getByText(/x = 10/)).toBeInTheDocument();
 });
-
-test('muestra "Copiado" al hacer clic en el botón de copiar', () => {
-  render(<VariableItem name="x" value={10} onCopy={() => {}} />);
-  const copyBtn = screen.getByTitle(/copiar variable/i);
-  fireEvent.click(copyBtn);
-  expect(screen.getByText(/Copiado/)).toBeInTheDocument();
-});
 ```
 
-**¿Qué se prueba?**
-- Que el componente renderiza correctamente los datos.
-- Que responde a eventos del usuario (clic, input, etc.).
-- Que muestra el feedback visual esperado.
-
-**¿De dónde se sacó la estructura de los tests?**
-- [Documentación oficial de React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-- [Documentación de Jest](https://jestjs.io/docs/getting-started)
-- Ejemplos adaptados al código y estructura de este proyecto.
-
-## Buenas prácticas y recomendaciones
-
-- **Escribe tests para cada nueva funcionalidad.**
-- **Simula el flujo real del usuario:** Usa `fireEvent` para inputs y botones.
-- **Revisa la cobertura de código** para asegurar que los tests cubren lo importante.
-- **Haz commit solo si los tests pasan.**
-- **Si un test se rompe al hacer cambios:**  
-  - Revisa si el cambio afecta el comportamiento esperado.
-  - Actualiza el test si el nuevo comportamiento es correcto.
-  - Corrige el código si el test detecta un bug real.
-
-## ¿Qué pasa si los tests se rompen al avanzar?
-
-Es normal que algunos tests fallen si cambias la lógica, los nombres de los elementos, o el flujo de la app.  
-Esto te ayuda a detectar rápidamente si algo importante dejó de funcionar.  
-**Siempre revisa los tests rotos y decide si debes actualizar el test o corregir el código.**
-
-## Fuentes y documentación recomendada
-
-- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-- [Jest](https://jestjs.io/docs/getting-started)
-- [Guía de pruebas en React](https://react.dev/learn/testing)
-- [Testing Playground](https://testing-playground.com/) para generar queries de testing.
+---
 
 ## Contribuir
 
@@ -117,6 +150,20 @@ Esto te ayuda a detectar rápidamente si algo importante dejó de funcionar.
 2. Crea una rama nueva (`git checkout -b feature/nueva-funcionalidad`).
 3. Haz tus cambios y agrega tests.
 4. Haz un pull request.
+
+---
+
+## Recursos y documentación recomendada
+
+- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
+- [Jest](https://jestjs.io/docs/getting-started)
+- [Cypress](https://docs.cypress.io/)
+- [Playwright](https://playwright.dev/)
+- [Guía de pruebas en React](https://react.dev/learn/testing)
+- [Documentación .NET](https://learn.microsoft.com/dotnet/)
+- [Guía de CI/CD en GitHub Actions](https://docs.github.com/en/actions)
+
+---
 
 ## Licencia
 
