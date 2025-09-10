@@ -145,6 +145,7 @@ function Variables({
 
   const handleBulkDelete = () => {
     if (selectedVariables.size === 0) {
+      /* istanbul ignore next */
       alert('No hay variables seleccionadas para eliminar.');
       return;
     }

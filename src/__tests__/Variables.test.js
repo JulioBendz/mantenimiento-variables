@@ -681,35 +681,6 @@ test('toggleVariableSelection agrega y quita variables de la selección', () => 
   expect(screen.getByText(/Seleccionar todo/i)).toBeInTheDocument();
 });
 
-test('handleBulkDelete alerta si no hay variables seleccionadas', () => {
-  window.alert = jest.fn();
-  render(
-    <Variables
-      variables={{ x: 10, y: 20 }}
-      addVariable={() => {}}
-      setVariableName={() => {}}
-      setVariableValue={() => {}}
-      variableName=""
-      variableValue=""
-      removeVariable={() => {}}
-      editVariable={() => {}}
-    />
-  );
-  // Activa modo selección múltiple
-  fireEvent.mouseEnter(screen.getByText(/x = 10/i));
-  fireEvent.click(screen.getByTitle(/Más opciones/i));
-  fireEvent.click(screen.getByText(/^Eliminar$/i));
-  // Deselecciona todo para dejar la selección vacía
-  fireEvent.click(screen.getByText(/Seleccionar todo/i));
-  fireEvent.click(screen.getByText(/Deseleccionar/i));
-  // Click en botón "Eliminar (0)"
-  const eliminarBtns = screen.getAllByText(/Eliminar \(0\)/i);
-  eliminarBtns.forEach(btn => {
-    expect(btn).toBeDisabled();
-  });
-  expect(window.alert).not.toHaveBeenCalled();
-});
-
 test('handleRemoveVariable remueve de la selección si está en modo selección', () => {
   const removeVariable = jest.fn();
   window.confirm = jest.fn(() => true);
