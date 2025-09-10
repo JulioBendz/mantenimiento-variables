@@ -259,7 +259,7 @@ function PeriodSelector({
                   <option value="">No copiar datos</option>
                   {sortedPeriods.map(([key, period]) => (
                     <option key={key} value={key}>
-                      {period.name} ({Object.keys(period.variables).length} variables, {period.formulas.length} fórmulas)
+                      {period.name} ({Object.keys(period.variables || {}).length} variables)
                     </option>
                   ))}
                 </select>
@@ -380,7 +380,10 @@ function PeriodSelector({
           >
             {sortedPeriods.map(([key, period]) => (
               <option key={key} value={key}>
-                {period.name} ({Object.keys(period.variables).length} variables, {period.formulas.length} fórmulas)
+                {period.name} (
+                  {Object.keys(period.variables || {}).length} variables, 
+                  {(period.formulas || []).length} fórmulas
+                )
               </option>
             ))}
           </select>
@@ -439,7 +442,7 @@ function PeriodSelector({
                 <option value="">Seleccionar período...</option>
                 {availablePeriodsForCopy.map(([key, period]) => (
                   <option key={key} value={key}>
-                    {period.name} ({Object.keys(period.variables).length} variables)
+                    {period.name} ({Object.keys(period.variables || {}).length} variables)
                   </option>
                 ))}
               </select>
@@ -450,11 +453,11 @@ function PeriodSelector({
                 <div className="text-sm text-green-800">
                   <strong>Variables a copiar:</strong>
                   <div className="mt-1 text-xs">
-                    {Object.keys(periods[selectedSourceForVariables].variables).length > 0 ? (
+                    {Object.keys(periods[selectedSourceForVariables]?.variables || {}).length > 0 ? (
                       <>
-                        {Object.keys(periods[selectedSourceForVariables].variables).slice(0, 5).join(', ')}
-                        {Object.keys(periods[selectedSourceForVariables].variables).length > 5 && 
-                          ` y ${Object.keys(periods[selectedSourceForVariables].variables).length - 5} más...`
+                        {Object.keys(periods[selectedSourceForVariables]?.variables || {}).slice(0, 5).join(', ')}
+                        {Object.keys(periods[selectedSourceForVariables]?.variables || {}).length > 5 &&
+                          ` y ${Object.keys(periods[selectedSourceForVariables]?.variables || {}).length - 5} más...`
                         }
                       </>
                     ) : (
@@ -512,7 +515,7 @@ function PeriodSelector({
                 <option value="">Seleccionar período...</option>
                 {availablePeriodsForCopy.map(([key, period]) => (
                   <option key={key} value={key}>
-                    {period.name} ({period.formulas.length} fórmulas)
+                    {period.name} ({Object.keys(period.variables || {}).length} variables)
                   </option>
                 ))}
               </select>
@@ -523,11 +526,11 @@ function PeriodSelector({
                 <div className="text-sm text-blue-800">
                   <strong>Fórmulas a copiar:</strong>
                   <div className="mt-1 text-xs">
-                    {periods[selectedSourceForFormulas].formulas.length > 0 ? (
+                    {(periods[selectedSourceForFormulas]?.formulas || []).length > 0 ? (
                       <>
-                        {periods[selectedSourceForFormulas].formulas.slice(0, 3).map(f => f.name).join(', ')}
-                        {periods[selectedSourceForFormulas].formulas.length > 3 && 
-                          ` y ${periods[selectedSourceForFormulas].formulas.length - 3} más...`
+                        {(periods[selectedSourceForFormulas]?.formulas || []).slice(0, 3).map(f => f.name).join(', ')}
+                        {(periods[selectedSourceForFormulas]?.formulas || []).length > 3 && 
+                          ` y ${(periods[selectedSourceForFormulas]?.formulas || []).length - 3} más...`
                         }
                       </>
                     ) : (
@@ -541,7 +544,10 @@ function PeriodSelector({
             <div className="flex gap-2">
               <button
                 onClick={handleCopyFormulasWithModal}
-                disabled={!selectedSourceForFormulas || periods[selectedSourceForFormulas]?.formulas.length === 0}
+                disabled={
+                  !selectedSourceForFormulas ||
+                  (periods[selectedSourceForFormulas]?.formulas || []).length === 0
+                }
                 className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition duration-200"
               >
                 Copiar Fórmulas
