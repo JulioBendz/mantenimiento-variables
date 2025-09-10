@@ -495,6 +495,9 @@ test('muestra alerta si intenta eliminar sin selección', async () => {
 });
 
 test('getUsedVariables retorna error si ocurre excepción', () => {
+  const originalError = console.error;
+  console.error = jest.fn(); // Oculta el error en consola
+
   const variables = {};
   Object.defineProperty(variables, 'x', {
     get() { throw new Error('fail'); }
@@ -514,6 +517,8 @@ test('getUsedVariables retorna error si ocurre excepción', () => {
   const found = Array.from(document.querySelectorAll('*'))
     .some(el => el.textContent && el.textContent.includes('Error al determinar'));
   expect(found).toBe(true);
+
+  console.error = originalError; // Restaura después del test
 });
 
 test('no muestra análisis de porcentajes si no hay fórmulas válidas', () => {
