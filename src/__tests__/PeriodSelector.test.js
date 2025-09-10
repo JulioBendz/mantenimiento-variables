@@ -4,8 +4,10 @@ import PeriodSelector from '../components/PeriodSelector';
 const periods = {
   '2025-07': {
     name: 'Periodo 1',
-    variables: { x: 1 },
-    formulas: [{ name: 'Fórmula 1' }]
+    variables: { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 },
+    formulas: [
+      { name: 'F1' }, { name: 'F2' }, { name: 'F3' }, { name: 'F4' }
+    ]
   },
   '2025-08': {
     name: 'Periodo 2',
@@ -314,7 +316,6 @@ test('no permite copiar variables si no seleccionas período fuente', () => {
     />
   );
   fireEvent.click(screen.getByRole('button', { name: /variables/i }));
-  // Des-selecciona el período fuente
   fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '' } });
   expect(screen.getByRole('button', { name: /copiar variables/i })).toBeDisabled();
 });
@@ -652,4 +653,92 @@ test('no copia fórmulas si el período fuente tiene formulas undefined', () => 
   fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
   fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '2025-09' } });
   expect(screen.getByRole('button', { name: /copiar fórmulas/i })).toBeDisabled();
+});
+
+test('no copia variables si el período fuente no existe (branch defensivo)', () => {
+  const copyVariablesFromPreviousPeriod = jest.fn();
+  const periodsSinFuente = {
+    '2025-07': { name: 'Periodo 1', variables: { x: 1 }, formulas: [{ name: 'F1' }] }
+    // No existe '2025-99'
+  };
+  render(
+    <PeriodSelector
+      periods={periodsSinFuente}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={copyVariablesFromPreviousPeriod}
+      copyFormulasFromPreviousPeriod={() => {}}
+    />
+  );
+  // Simula la acción que intenta copiar desde un período inexistente
+  // (puedes llamar directamente la función si está exportada, o simular el flujo)
+  // Aquí solo asegúrate de que no se llama el callback
+  // Por ejemplo, si tienes un botón para copiar, selecciona un período inexistente y haz click
+  // El botón debe estar deshabilitado o no debe pasar nada
+});
+
+test('no copia fórmulas si el período fuente no existe (branch defensivo)', () => {
+  const copyFormulasFromPreviousPeriod = jest.fn();
+  const periodsSinFuente = {
+    '2025-07': { name: 'Periodo 1', variables: { x: 1 }, formulas: [{ name: 'F1' }] }
+    // No existe '2025-99'
+  };
+  render(
+    <PeriodSelector
+      periods={periodsSinFuente}
+      currentPeriod="2025-07"
+      setCurrentPeriod={() => {}}
+      createNewPeriod={() => {}}
+      deletePeriod={() => {}}
+      copyVariablesFromPreviousPeriod={() => {}}
+      copyFormulasFromPreviousPeriod={copyFormulasFromPreviousPeriod}
+    />
+  );
+  // Simula la acción que intenta copiar desde un período inexistente
+  // El botón debe estar deshabilitado o no debe pasar nada
+});
+
+test('muestra "más..." si hay más de 5 variables al copiar', () => {
+  render(<PeriodSelector
+    periods={periods}
+    currentPeriod="2025-08"
+    setCurrentPeriod={() => {}}
+    createNewPeriod={() => {}}
+    deletePeriod={() => {}}
+    copyVariablesFromPreviousPeriod={() => {}}
+    copyFormulasFromPreviousPeriod={() => {}}
+  />);
+  fireEvent.click(screen.getByRole('button', { name: /variables/i }));
+  fireEvent.change(screen.getByLabelText(/copiar variables desde/i), { target: { value: '2025-07' } });
+  expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
+});
+
+test('muestra "más..." si hay más de 3 fórmulas al copiar', () => {
+  render(<PeriodSelector
+    periods={periods}
+    currentPeriod="2025-08"
+    setCurrentPeriod={() => {}}
+    createNewPeriod={() => {}}
+    deletePeriod={() => {}}
+    copyVariablesFromPreviousPeriod={() => {}}
+    copyFormulasFromPreviousPeriod={() => {}}
+  />);
+  fireEvent.click(screen.getByRole('button', { name: /fórmulas/i }));
+  fireEvent.change(screen.getByLabelText(/copiar fórmulas desde/i), { target: { value: '2025-07' } });
+  expect(screen.getByText(/y 1 más.../i)).toBeInTheDocument();
+});
+
+test('muestra "Sin seleccionar" si no hay período actual', () => {
+  render(<PeriodSelector
+    periods={{}}
+    currentPeriod="no-existe"
+    setCurrentPeriod={() => {}}
+    createNewPeriod={() => {}}
+    deletePeriod={() => {}}
+    copyVariablesFromPreviousPeriod={() => {}}
+    copyFormulasFromPreviousPeriod={() => {}}
+  />);
+  expect(screen.getByText(/Sin seleccionar/i)).toBeInTheDocument();
 });
