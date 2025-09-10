@@ -1,5 +1,22 @@
 import React, { useState } from 'react';
 
+// Mueve estas funciones FUERA del componente
+function copyVariablesFromSpecificPeriod(periods, copyVariablesFromPreviousPeriod, targetPeriod, sourcePeriodKey) {
+  if (!periods[sourcePeriodKey]) return;
+  const sourceVariables = periods[sourcePeriodKey].variables || {};
+  if (Object.keys(sourceVariables).length > 0) {
+    copyVariablesFromPreviousPeriod(targetPeriod, sourcePeriodKey);
+  }
+}
+
+function copyFormulasFromSpecificPeriod(periods, copyFormulasFromPreviousPeriod, targetPeriod, sourcePeriodKey) {
+  if (!periods[sourcePeriodKey]) return;
+  const sourceFormulas = periods[sourcePeriodKey].formulas || [];
+  if (sourceFormulas.length > 0) {
+    copyFormulasFromPreviousPeriod(targetPeriod, sourcePeriodKey);
+  }
+}
+
 function PeriodSelector({ 
   periods, 
   currentPeriod, 
@@ -53,10 +70,10 @@ function PeriodSelector({
     if (sourcePeriod && (copyVariables || copyFormulas)) {
       setTimeout(() => {
         if (copyVariables) {
-          copyVariablesFromSpecificPeriod(periodKey, sourcePeriod);
+          copyVariablesFromSpecificPeriod(periods, copyVariablesFromPreviousPeriod, periodKey, sourcePeriod);
         }
         if (copyFormulas) {
-          copyFormulasFromSpecificPeriod(periodKey, sourcePeriod);
+          copyFormulasFromSpecificPeriod(periods, copyFormulasFromPreviousPeriod, periodKey, sourcePeriod);
         }
       }, 100);
     }
@@ -74,30 +91,10 @@ function PeriodSelector({
     }
   };
 
-  const copyVariablesFromSpecificPeriod = (targetPeriod, sourcePeriodKey) => {
-    if (!periods[sourcePeriodKey]) return;
-    
-    const sourceVariables = periods[sourcePeriodKey].variables;
-    
-    if (Object.keys(sourceVariables).length > 0) {
-      copyVariablesFromPreviousPeriod(targetPeriod, sourcePeriodKey);
-    }
-  };
-
-  const copyFormulasFromSpecificPeriod = (targetPeriod, sourcePeriodKey) => {
-    if (!periods[sourcePeriodKey]) return;
-    
-    const sourceFormulas = periods[sourcePeriodKey].formulas;
-    
-    if (sourceFormulas.length > 0) {
-      copyFormulasFromPreviousPeriod(targetPeriod, sourcePeriodKey);
-    }
-  };
-
   // Función para copiar variables con modal de selección
   const handleCopyVariablesWithModal = () => {
     
-    copyVariablesFromSpecificPeriod(currentPeriod, selectedSourceForVariables);
+    copyVariablesFromSpecificPeriod(periods, copyVariablesFromPreviousPeriod, currentPeriod, selectedSourceForVariables);
     setShowVariablesModal(false);
     setSelectedSourceForVariables('');
   };
@@ -105,7 +102,7 @@ function PeriodSelector({
   // Función para copiar fórmulas con modal de selección
   const handleCopyFormulasWithModal = () => {
     
-    copyFormulasFromSpecificPeriod(currentPeriod, selectedSourceForFormulas);
+    copyFormulasFromSpecificPeriod(periods, copyFormulasFromPreviousPeriod, currentPeriod, selectedSourceForFormulas);
     setShowFormulasModal(false);
     setSelectedSourceForFormulas('');
   };
@@ -582,5 +579,10 @@ function PeriodSelector({
     </div>
   );
 }
+
+export {
+  copyVariablesFromSpecificPeriod,
+  copyFormulasFromSpecificPeriod
+};
 
 export default PeriodSelector;
