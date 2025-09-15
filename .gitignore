@@ -44,3 +44,7 @@ TestResults/
 
 # VS Code settings (si usas VS Code)
 .vscode/
+
+# Archivos de configuración sensibles
+MantenimientoVariablesApi/MantenimientoVariablesApi/appsettings.json
+MantenimientoVariablesApi/MantenimientoVariablesApi/appsettings.Development.json
