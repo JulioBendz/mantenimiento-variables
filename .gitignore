@@ -21,4 +21,26 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Visual Studio
 .vs/
+*.user
+*.suo
+
+# Build results
+bin/
+obj/
+
+# Test results
+TestResults/
+*.trx
+
+# Dotnet tools
+*.db
+
+# Otros archivos temporales
+*.cache
+*.log
+
+# VS Code settings (si usas VS Code)
+.vscode/
