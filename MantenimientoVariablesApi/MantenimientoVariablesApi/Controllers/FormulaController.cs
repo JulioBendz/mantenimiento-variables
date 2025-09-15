@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MantenimientoVariablesApi.Models;
 
 namespace MantenimientoVariablesApi.Controllers
@@ -7,15 +8,23 @@ namespace MantenimientoVariablesApi.Controllers
     [Route("api/[controller]")]
     public class FormulaController : ControllerBase
     {
-        private static List<Formula> formulas = new List<Formula>();
+        private readonly AppDbContext _context;
+
+        public FormulaController(AppDbContext context)
+        {
+            _context = context;
+        }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Formula>> GetAll() => formulas;
+        public ActionResult<IEnumerable<Formula>> GetAll()
+        {
+            return _context.Formulas.ToList();
+        }
 
         [HttpGet("{id}")]
         public ActionResult<Formula> Get(int id)
         {
-            var formula = formulas.FirstOrDefault(f => f.Id == id);
+            var formula = _context.Formulas.Find(id);
             if (formula == null) return NotFound();
             return formula;
         }
@@ -23,29 +32,31 @@ namespace MantenimientoVariablesApi.Controllers
         [HttpPost]
         public ActionResult<Formula> Create(Formula formula)
         {
-            formula.Id = formulas.Count > 0 ? formulas.Max(f => f.Id) + 1 : 1;
             formula.CreatedAt = DateTime.UtcNow;
-            formulas.Add(formula);
+            _context.Formulas.Add(formula);
+            _context.SaveChanges();
             return CreatedAtAction(nameof(Get), new { id = formula.Id }, formula);
         }
 
         [HttpPut("{id}")]
         public IActionResult Update(int id, Formula updated)
         {
-            var formula = formulas.FirstOrDefault(f => f.Id == id);
+            var formula = _context.Formulas.Find(id);
             if (formula == null) return NotFound();
             formula.Name = updated.Name;
             formula.OriginalFormula = updated.OriginalFormula;
             formula.Result = updated.Result;
+            _context.SaveChanges();
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var formula = formulas.FirstOrDefault(f => f.Id == id);
+            var formula = _context.Formulas.Find(id);
             if (formula == null) return NotFound();
-            formulas.Remove(formula);
+            _context.Formulas.Remove(formula);
+            _context.SaveChanges();
             return NoContent();
         }
     }
